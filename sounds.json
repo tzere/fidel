@@ -1,0 +1,31 @@
+{
+  "symbols": {
+    "ሀ": "audio/ሀ.mp3",
+    "ለ": "audio/ለ.mp3",
+    "ሐ": "audio/ሐ.mp3",
+    "መ": "audio/መ.mp3",
+    "ሠ": "audio/ሠ.mp3",
+    "ረ": "audio/ረ.mp3",
+    "ሰ": "audio/ሰ.mp3",
+    "ሸ": "audio/ሸ.mp3",
+    "ቀ": "audio/ቀ.mp3",
+    "በ": "audio/በ.mp3",
+    "ተ": "audio/ተ.mp3",
+    "ኀ": "audio/ኀ.mp3",
+    "ነ": "audio/ነ.mp3",
+    "አ": "audio/አ.mp3",
+    "ከ": "audio/ከ.mp3",
+    "ወ": "audio/ወ.mp3",
+    "ዐ": "audio/ዐ.mp3",
+    "ዘ": "audio/ዘ.mp3",
+    "ዠ": "audio/ዠ.mp3",
+    "የ": "audio/የ.mp3",
+    "ደ": "audio/ደ.mp3",
+    "ገ": "audio/ገ.mp3",
+    "ጠ": "audio/ጠ.mp3",
+    "ጨ": "audio/ጨ.mp3",
+    "ጸ": "audio/ጸ.mp3",
+    "ፀ": "audio/ፀ.mp3",
+    "ፈ": "audio/ፈ.mp3"
+  }
+}
