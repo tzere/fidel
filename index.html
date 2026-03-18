@@ -855,18 +855,28 @@
     }
 
     function buildVariantButtons() {
+      variantGrid.style.display = 'grid';
+      variantGrid.style.gridTemplateColumns = 'repeat(2, minmax(100px, 1fr))';
+      variantGrid.style.maxWidth = '240px';
+      variantGrid.style.gap = '10px';
       variantGrid.innerHTML = `
-        <button class="variant-btn active" type="button" aria-label="Current stage">ግእዝ (1)</button>
+        <button class="variant-btn active" id="firstPaneToggle" type="button" aria-label="First group">ግእዝ (1)</button>
         <button class="variant-btn active" id="secondPaneToggle" type="button" aria-label="Second group toggle">ግእዝ (2)</button>
       `;
 
+      const firstPaneToggle = document.getElementById('firstPaneToggle');
       const secondPaneToggle = document.getElementById('secondPaneToggle');
-      if (secondPaneToggle) {
+      const secondPane = document.getElementById('secondPane');
+
+      if (firstPaneToggle && secondPane) {
+        firstPaneToggle.addEventListener('click', () => {
+          secondPane.open = false;
+        });
+      }
+
+      if (secondPaneToggle && secondPane) {
         secondPaneToggle.addEventListener('click', () => {
-          const secondPane = document.getElementById('secondPane');
-          if (secondPane) {
-            secondPane.open = !secondPane.open;
-          }
+          secondPane.open = !secondPane.open;
         });
       }
     }
@@ -1081,7 +1091,7 @@
     });
 
     replayBtn.addEventListener('click', () => {
-      if (!target) {
+      if (!gameStarted || !target) {
         pickRandomTarget();
         return;
       }
