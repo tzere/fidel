@@ -1,1149 +1,400 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ምልከት ፊደላት</title>
-  <style>
-    :root {
-      --sky1: #8fdcff;
-      --sky2: #d9f5ff;
-      --sun: #ffd85e;
-      --grass1: #97df72;
-      --grass2: #76c95d;
-      --card: rgba(255,255,255,0.92);
-      --text: #1f2937;
-      --muted: #5b6678;
-      --blue: #1d9bf0;
-      --green: #25b96f;
-      --red: #ff6b6b;
-      --yellow: #ffcb3b;
-      --gold: #f4b400;
-      --purple: #8b5cf6;
-      --pink: #ff97c7;
-      --shadow: 0 18px 40px rgba(31, 41, 55, 0.16);
-      --border: rgba(255,255,255,0.65);
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(255,255,255,0.8), transparent 24%),
-        radial-gradient(circle at 85% 15%, rgba(255,255,255,0.7), transparent 18%),
-        linear-gradient(180deg, var(--sky1) 0%, var(--sky2) 42%, #fff6bf 72%, #b8ec8a 100%);
-      overflow-x: hidden;
-    }
-
-    .scene {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-    }
-
-    .cloud {
-      position: absolute;
-      background: rgba(255,255,255,0.92);
-      border-radius: 999px;
-    }
-
-    .cloud::before,
-    .cloud::after {
-      content: "";
-      position: absolute;
-      background: rgba(255,255,255,0.92);
-      border-radius: 50%;
-    }
-
-    .cloud.one { width: 130px; height: 40px; top: 72px; left: 7%; }
-    .cloud.one::before { width: 48px; height: 48px; left: 16px; top: -20px; }
-    .cloud.one::after { width: 60px; height: 60px; right: 12px; top: -28px; }
-    .cloud.two { width: 145px; height: 42px; top: 110px; right: 10%; }
-    .cloud.two::before { width: 52px; height: 52px; left: 18px; top: -18px; }
-    .cloud.two::after { width: 64px; height: 64px; right: 14px; top: -26px; }
-
-    .hill {
-      position: absolute;
-      bottom: -40px;
-      border-radius: 50%;
-      background: var(--grass1);
-    }
-
-    .hill.one { left: -8%; width: 42%; height: 180px; }
-    .hill.two { left: 24%; width: 40%; height: 170px; background: #a0e57d; }
-    .hill.three { right: -8%; width: 44%; height: 190px; background: var(--grass2); }
-
-    .container {
-      position: relative;
-      z-index: 1;
-      max-width: 1240px;
-      margin: 0 auto;
-      padding: 22px;
-    }
-
-    .card {
-      background: var(--card);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--border);
-      border-radius: 34px;
-      box-shadow: var(--shadow);
-    }
-
-    .intro-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      background: rgba(93, 167, 229, 0.18);
-      backdrop-filter: blur(8px);
-    }
-
-    .intro-card {
-      width: min(980px, 100%);
-      display: grid;
-      grid-template-columns: 1.05fr 0.95fr;
-      gap: 24px;
-      padding: 26px;
-    }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      border-radius: 999px;
-      background: #fff3b1;
-      color: #6b4f00;
-      font-weight: 900;
-      font-size: 0.96rem;
-    }
-
-    h1 {
-      margin: 16px 0 10px;
-      font-size: clamp(2.4rem, 5vw, 4.3rem);
-      line-height: 0.98;
-      letter-spacing: -0.03em;
-    }
-
-    .intro-text p,
-    .subtitle {
-      margin: 0;
-      line-height: 1.65;
-      color: var(--muted);
-      font-size: 1.08rem;
-    }
-
-    .start-big {
-      margin-top: 18px;
-      min-height: 68px;
-      padding: 0 28px;
-      border-radius: 24px;
-      background: linear-gradient(135deg, #20c6ff, #1f7df3);
-      color: #fff;
-      border: none;
-      font: inherit;
-      font-weight: 900;
-      font-size: 1.15rem;
-      cursor: pointer;
-      box-shadow: 0 14px 28px rgba(31, 125, 243, 0.28);
-    }
-
-    .start-big:hover { transform: translateY(-2px); }
-    .start-big:active { transform: scale(0.98); }
-
-    .intro-art {
-      min-height: 320px;
-      border-radius: 28px;
-      overflow: hidden;
-      background: linear-gradient(180deg, rgba(255,255,255,0.46), rgba(255,255,255,0.08));
-      padding: 8px;
-    }
-
-    .intro-art svg,
-    .hero-art svg { width: 100%; height: 100%; display: block; }
-
-    .top-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-      margin-bottom: 18px;
-    }
-
-    .hero-copy,
-    .panel { padding: 20px; }
-
-    .hero-art {
-      display: none;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-top: 18px;
-    }
-
-    .stat {
-      background: rgba(255,255,255,0.8);
-      border-radius: 22px;
-      padding: 14px 10px;
-      text-align: center;
-      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.14);
-    }
-
-    .stat-label {
-      color: var(--muted);
-      font-size: 0.88rem;
-      font-weight: 800;
-    }
-
-    .stat-value {
-      margin-top: 6px;
-      font-size: 1.8rem;
-      font-weight: 900;
-    }
-
-    .main-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 18px;
-    }
-
-    .prompt-wrap {
-      background: linear-gradient(180deg, #ffffff, #f8fbff);
-      border-radius: 28px;
-      padding: 24px;
-      text-align: center;
-      box-shadow: inset 0 0 0 1px rgba(148,163,184,0.12);
-    }
-
-    .prompt-label {
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      font-size: 0.82rem;
-      color: var(--muted);
-      font-weight: 900;
-    }
-
-    .sound-icon {
-      font-size: clamp(3rem, 8vw, 5.5rem);
-      margin: 10px 0;
-    }
-
-    .message {
-      min-height: 3.4em;
-      font-size: 1.05rem;
-      line-height: 1.55;
-      color: #475569;
-      font-weight: 800;
-    }
-
-    .action-row {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      margin-top: 18px;
-    }
-
-    button {
-      border: none;
-      cursor: pointer;
-      font: inherit;
-      transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease, opacity 0.16s ease;
-    }
-
-    button:hover { transform: translateY(-2px); filter: brightness(1.02); }
-    button:active { transform: scale(0.98); }
-
-    .action-btn {
-      min-height: 62px;
-      border-radius: 22px;
-      font-weight: 900;
-      font-size: 1.04rem;
-      box-shadow: 0 12px 22px rgba(31, 41, 55, 0.14);
-    }
-
-    .sound-btn {
-      background: linear-gradient(135deg, #27c6ff, #1c8ef5);
-      color: white;
-    }
-
-    .helper-note {
-      margin-top: 16px;
-      padding: 14px 16px;
-      background: #fff7dc;
-      border-radius: 18px;
-      color: #6c5b18;
-      font-size: 0.96rem;
-      line-height: 1.55;
-      font-weight: 800;
-    }
-
-    .letters-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .letters-top h2 {
-      margin: 0;
-      font-size: 1.8rem;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 8px 14px;
-      border-radius: 999px;
-      font-weight: 900;
-      background: #ffe5f5;
-      color: #9d2563;
-      min-width: 132px;
-      text-align: center;
-    }
-
-    .variant-grid,
-    .letter-grid {
-      display: grid;
-      gap: 14px;
-    }
-
-    .variant-grid {
-      grid-template-columns: 1fr;
-      max-width: 120px;
-      margin-bottom: 12px;
-    }
-
-    .letter-grid {
-      grid-template-columns: repeat(5, minmax(76px, 1fr));
-    }
-
-    .variant-btn,
-    .letter-btn {
-      min-height: 86px;
-      border-radius: 24px;
-      font-weight: 900;
-      color: var(--text);
-      background: linear-gradient(180deg, #ffffff, #fff6fb);
-      box-shadow: 0 10px 18px rgba(148, 163, 184, 0.18);
-      border: 3px solid transparent;
-    }
-
-    .variant-btn {
-      font-size: 0.92rem;
-      padding: 8px 10px;
-      min-height: 48px;
-      border-radius: 16px;
-    }
-
-    .variant-btn.active {
-      background: linear-gradient(180deg, #fff4b5, #ffd86a);
-      border-color: var(--gold);
-      color: #6d5200;
-    }
-
-    .letter-btn {
-      font-size: clamp(1.9rem, 3vw, 2.7rem);
-    }
-
-    .letter-btn.correct {
-      background: linear-gradient(180deg, #dcfce7, #86efac);
-      border-color: #1db954;
-      color: #14532d;
-    }
-
-    .letter-btn.wrong {
-      background: linear-gradient(180deg, #ffe0e0, #ffb3b3);
-      border-color: #ff6b6b;
-      color: #7f1d1d;
-    }
-
-    .mini-note {
-      margin-top: 14px;
-      font-size: 0.98rem;
-      color: var(--muted);
-      font-weight: 800;
-    }
-
-    .celebration-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 12;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      background: rgba(41, 91, 146, 0.18);
-      backdrop-filter: blur(6px);
-    }
-
-    .celebration-card {
-      width: min(560px, 100%);
-      padding: 28px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .celebration-card h2 {
-      margin: 0 0 10px;
-      font-size: clamp(2rem, 4vw, 3rem);
-      line-height: 1;
-    }
-
-    .celebration-card p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 1.08rem;
-      line-height: 1.6;
-      font-weight: 800;
-    }
-
-    .celebration-actions {
-      margin-top: 20px;
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .celebration-btn {
-      min-height: 58px;
-      padding: 0 22px;
-      border-radius: 20px;
-      font-weight: 900;
-      font-size: 1rem;
-      box-shadow: 0 12px 22px rgba(31, 41, 55, 0.14);
-    }
-
-    .celebration-primary {
-      background: linear-gradient(135deg, #27c6ff, #1c8ef5);
-      color: white;
-    }
-
-    .celebration-secondary {
-      background: linear-gradient(135deg, #ffcf34, #ffb020);
-      color: #4a3800;
-    }
-
-    .stars-layer {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
-
-    .star-burst {
-      position: absolute;
-      font-size: 1.9rem;
-      animation: burstUp 1.8s ease-out forwards;
-      opacity: 0;
-      filter: drop-shadow(0 4px 10px rgba(255, 204, 51, 0.35));
-    }
-
-    .confetti-piece {
-      position: absolute;
-      width: 14px;
-      height: 20px;
-      border-radius: 4px;
-      animation: confettiFall 2.4s ease-out forwards;
-      opacity: 0;
-    }
-
-    @keyframes burstUp {
-      0% {
-        transform: translateY(20px) scale(0.5) rotate(0deg);
-        opacity: 0;
-      }
-      15% {
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(-180px) scale(1.2) rotate(18deg);
-        opacity: 0;
-      }
-    }
-
-    @keyframes popIn {
-      0% { transform: scale(0.85); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    @keyframes confettiFall {
-      0% {
-        transform: translateY(-30px) rotate(0deg);
-        opacity: 0;
-      }
-      10% {
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(320px) rotate(540deg);
-        opacity: 0;
-      }
-    }
-      100% { transform: scale(1); opacity: 1; }
-    }
-
-    @media (max-width: 1060px) {
-      .top-grid,
-      .main-grid,
-      .intro-card {
-        grid-template-columns: 1fr;
-      }
-      .intro-art,
-      .hero-art { min-height: 240px; }
-    }
-
-    @media (max-width: 760px) {
-      .container { padding: 16px; }
-      .hero-copy,
-      .hero-art,
-      .panel,
-      .intro-card { padding: 18px; }
-      .letter-grid { grid-template-columns: repeat(3, minmax(64px, 1fr)); }
-      .stats { grid-template-columns: repeat(2, 1fr); }
-    }
-  </style>
-</head>
-<body>
-  <div class="scene" aria-hidden="true">
-    <div class="cloud one"></div>
-    <div class="cloud two"></div>
-    <div class="hill one"></div>
-    <div class="hill two"></div>
-    <div class="hill three"></div>
-  </div>
-
-  <div class="intro-overlay" id="introOverlay">
-    <div class="card intro-card">
-      <div class="intro-text">
-        <div class="badge">🌟 Welcome . መርሐባ!</div>
-        <h1>ምልከት ፊደላት</h1>
-        <p>
-          Welcome! This app will help you to master the Geez Fidelat. Listen to a letter sound, tap the matching Geez letter, and unlock the next learning stage when you master this set.
-        </p>
-        <button class="start-big" id="enterGameBtn" type="button">🎉 Start / ንስማዕ</button>
-      </div>
-      <div class="intro-art" aria-hidden="true">
-        <svg viewBox="0 0 540 320" role="img">
-          <defs>
-            <linearGradient id="dress1" x1="0" x2="1">
-              <stop offset="0%" stop-color="#ff8fb3" />
-              <stop offset="100%" stop-color="#ffb347" />
-            </linearGradient>
-            <linearGradient id="dress2" x1="0" x2="1">
-              <stop offset="0%" stop-color="#6ee7ff" />
-              <stop offset="100%" stop-color="#8b5cf6" />
-            </linearGradient>
-            <linearGradient id="shirt" x1="0" x2="1">
-              <stop offset="0%" stop-color="#ffe36e" />
-              <stop offset="100%" stop-color="#ff9f43" />
-            </linearGradient>
-          </defs>
-          <circle cx="456" cy="60" r="28" fill="#ffd95e" />
-          <ellipse cx="120" cy="250" rx="90" ry="30" fill="#9de37b" />
-          <ellipse cx="280" cy="262" rx="110" ry="36" fill="#94db74" />
-          <ellipse cx="442" cy="252" rx="88" ry="30" fill="#86d667" />
-          <g transform="translate(70 88)">
-            <circle cx="42" cy="38" r="28" fill="#7a4b2f" />
-            <path d="M18 62 Q42 78 66 62 L72 132 L12 132 Z" fill="url(#dress1)" />
-            <circle cx="32" cy="36" r="18" fill="#8d5b3d" />
-            <path d="M14 35 Q32 4 50 35" fill="#2e1a12" />
-            <circle cx="26" cy="38" r="2.5" fill="#1f2937" />
-            <circle cx="38" cy="38" r="2.5" fill="#1f2937" />
-            <path d="M26 47 Q32 52 38 47" stroke="#7c2d12" stroke-width="2.5" fill="none" stroke-linecap="round" />
-            <path d="M3 95 Q-10 85 -14 102" stroke="#8d5b3d" stroke-width="8" fill="none" stroke-linecap="round" />
-            <path d="M82 95 Q96 85 101 102" stroke="#8d5b3d" stroke-width="8" fill="none" stroke-linecap="round" />
-          </g>
-          <g transform="translate(220 70)">
-            <circle cx="48" cy="44" r="30" fill="#6f452d" />
-            <rect x="16" y="74" width="64" height="70" rx="20" fill="url(#shirt)" />
-            <circle cx="48" cy="42" r="19" fill="#8d5b3d" />
-            <path d="M28 30 Q48 0 68 30" fill="#24120d" />
-            <circle cx="41" cy="42" r="2.5" fill="#1f2937" />
-            <circle cx="54" cy="42" r="2.5" fill="#1f2937" />
-            <path d="M41 52 Q48 58 55 52" stroke="#7c2d12" stroke-width="2.5" fill="none" stroke-linecap="round" />
-            <rect x="91" y="70" width="78" height="58" rx="12" fill="#ffffff" stroke="#60a5fa" stroke-width="4" />
-            <text x="130" y="106" font-size="26" text-anchor="middle" fill="#1d4ed8" font-weight="900">ሀ ሁ</text>
-          </g>
-          <g transform="translate(372 96)">
-            <circle cx="38" cy="36" r="27" fill="#71472e" />
-            <path d="M10 60 Q38 78 66 60 L71 130 L5 130 Z" fill="url(#dress2)" />
-            <circle cx="38" cy="35" r="17" fill="#8d5b3d" />
-            <path d="M18 28 Q38 2 58 28" fill="#2c160e" />
-            <circle cx="32" cy="36" r="2.5" fill="#1f2937" />
-            <circle cx="45" cy="36" r="2.5" fill="#1f2937" />
-            <path d="M31 46 Q38 51 45 46" stroke="#7c2d12" stroke-width="2.5" fill="none" stroke-linecap="round" />
-          </g>
-        </svg>
-      </div>
-    </div>
-  </div>
-
-  <div class="celebration-overlay" id="celebrationOverlay">
-    <div class="card celebration-card" style="animation: popIn 0.22s ease-out;">
-      <div class="stars-layer" id="starsLayer"></div>
-      <div class="badge" id="celebrationBadge">⭐ Great Job!</div>
-      <h2 id="celebrationTitle">You unlocked a new stage!</h2>
-      <p id="celebrationText">Keep going and listen for the next set of sounds.</p>
-      <div class="celebration-actions">
-        <button class="celebration-btn celebration-primary" id="celebrationContinueBtn" type="button">Continue</button>
-        <button class="celebration-btn celebration-secondary" id="celebrationNextBtn" type="button">Go to New Stage</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="container">
-    <section class="top-grid">
-      <div class="card hero-copy">
-        <div class="badge">🌈 Listen • Match • Unlock</div>
-        <h1>ምልከት ፊደላት</h1>
-        <p class="subtitle">
-          Start with the main letters (ግእዝ). After mastering ግእዝ, the second variant (ካዕብ) will be activated. And then the third (ሣልስ), etc.
-        </p>
-        <div class="stats" aria-label="Game statistics">
-          <div class="stat">
-            <div class="stat-label">Score</div>
-            <div class="stat-value" id="score">0</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Rounds</div>
-            <div class="stat-value" id="rounds">0</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Accuracy</div>
-            <div class="stat-value" id="accuracy">0%</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Unlocked</div>
-            <div class="stat-value" id="unlockedCount">1/7</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="main-grid">
-      <div class="card panel">
-        <div class="letters-top">
-          <button class="action-btn sound-btn" id="replayBtn" type="button" style="min-height:48px;padding:0 16px;font-size:0.95rem;">▶ Start / Hear Again</button>
-          <h2>Choose the matching letter.</h2>
-          <span class="pill" id="symbolCountPill">ዝሰማዕናዮ ፊደል ንጠውውቕ።</span>
-        </div>
-
-        <div class="variant-grid" id="variantGrid"></div>
-        <div class="letter-grid" id="letterGrid"></div>
-        <div class="letter-grid" id="letterGrid2" style="display:none;"></div>
-        <div class="mini-note" id="activeVariantNote">Active stage: ግእዝ (1)</div>
-      </div>
-    </section>
-  </div>
-
-  <script>
-    const baseRows = [
-      ['ሀ','ሁ','ሂ','ሃ','ሄ','ህ','ሆ'],
-      ['ለ','ሉ','ሊ','ላ','ሌ','ል','ሎ'],
-      ['ሐ','ሑ','ሒ','ሓ','ሔ','ሕ','ሖ'],
-      ['መ','ሙ','ሚ','ማ','ሜ','ም','ሞ'],
-      ['ሰ','ሱ','ሲ','ሳ','ሴ','ስ','ሶ'],
-      ['ረ','ሩ','ሪ','ራ','ሬ','ር','ሮ'],
-      ['ሸ','ሹ','ሺ','ሻ','ሼ','ሽ','ሾ'],
-      ['ቀ','ቁ','ቂ','ቃ','ቄ','ቅ','ቆ'],
-      ['በ','ቡ','ቢ','ባ','ቤ','ብ','ቦ'],
-      ['ተ','ቱ','ቲ','ታ','ቴ','ት','ቶ'],
-      ['ነ','ኑ','ኒ','ና','ኔ','ን','ኖ'],
-      ['አ','ኡ','ኢ','ኣ','ኤ','እ','ኦ'],
-      ['ከ','ኩ','ኪ','ካ','ኬ','ክ','ኮ'],
-      ['ጸ','ጹ','ጺ','ጻ','ጼ','ጽ','ጾ']
-    ];
-
-    const baseRows2 = [
-      ['ሠ','ሡ','ሢ','ሣ','ሤ','ሥ','ሦ'],
-      ['ኀ','ኁ','ኂ','ኃ','ኄ','ኅ','ኆ'],
-      ['ፀ','ፁ','ፂ','ፃ','ፄ','ፅ','ፆ'],
-      ['ዘ','ዙ','ዚ','ዛ','ዜ','ዝ','ዞ'],
-      ['ዠ','ዡ','ዢ','ዣ','ዤ','ዥ','ዦ'],
-      ['የ','ዩ','ዪ','ያ','ዬ','ይ','ዮ'],
-      ['ደ','ዱ','ዲ','ዳ','ዴ','ድ','ዶ'],
-      ['ገ','ጉ','ጊ','ጋ','ጌ','ግ','ጎ'],
-      ['ጠ','ጡ','ጢ','ጣ','ጤ','ጥ','ጦ'],
-      ['ጨ','ጩ','ጪ','ጫ','ጬ','ጭ','ጮ'],
-      ['ወ','ዉ','ዊ','ዋ','ዌ','ው','ዎ'],
-      ['ዐ','ዑ','ዒ','ዓ','ዔ','ዕ','ዖ'],
-      ['ፈ','ፉ','ፊ','ፋ','ፌ','ፍ','ፎ']
-    ];
-
-    const masteryPrimary = new Set();
-    const masterySecondary = new Set();
-
-    let currentTab = 1;
-    let target = null;
-    let score = 0;
-    let rounds = 0;
-    let gameStarted = false;
-    let recordedAudio = {};
-
-    const introOverlay = document.getElementById('introOverlay');
-    const enterGameBtn = document.getElementById('enterGameBtn');
-    const scoreEl = document.getElementById('score');
-    const roundsEl = document.getElementById('rounds');
-    const accuracyEl = document.getElementById('accuracy');
-    const unlockedCountEl = document.getElementById('unlockedCount');
-    const messageEl = document.getElementById('message');
-    const helperNoteEl = document.getElementById('helperNote');
-    const variantGrid = document.getElementById('variantGrid');
-    const letterGrid = document.getElementById('letterGrid');
-    const letterGrid2 = document.getElementById('letterGrid2');
-    const secondPane = document.getElementById('secondPane');
-    const activeVariantNote = document.getElementById('activeVariantNote');
-    const symbolCountPill = document.getElementById('symbolCountPill');
-    const replayBtn = document.getElementById('replayBtn');
-    const celebrationOverlay = document.getElementById('celebrationOverlay');
-    const celebrationBadge = document.getElementById('celebrationBadge');
-    const celebrationTitle = document.getElementById('celebrationTitle');
-    const celebrationText = document.getElementById('celebrationText');
-    const celebrationContinueBtn = document.getElementById('celebrationContinueBtn');
-    const celebrationNextBtn = document.getElementById('celebrationNextBtn');
-    const starsLayer = document.getElementById('starsLayer');
-
-    function updateStats() {
-      scoreEl.textContent = score;
-      roundsEl.textContent = rounds;
-      const accuracy = rounds === 0 ? 0 : Math.round((score / rounds) * 100);
-      accuracyEl.textContent = accuracy + '%';
-      unlockedCountEl.textContent = (unlockedVariantIndex + 1) + '/7';
-    }
-
-    function getVariantSymbols(index) {
-      return baseRows.map(row => row[index]).filter(Boolean);
-    }
-
-    function getVariantSymbols2(index) {
-      return baseRows2.map(row => row[index]).filter(Boolean);
-    }
-
-    function getPlayableSymbolsForVariant(index) {
-      return getVariantSymbols(index).filter(symbol => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim());
-    }
-
-    function getPlayableSymbolsForVariant2(index) {
-      return getVariantSymbols2(index).filter(symbol => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim());
-    }
-
-    function refreshVariantAvailability() {
-      // kept for compatibility with the stats card
-      unlockedVariantIndex = currentTab === 2 ? 2 : 1;
-    }
-
-    function launchStars() {
-      starsLayer.innerHTML = '';
-      const icons = ['⭐', '🌟', '✨', '🎉'];
-      for (let i = 0; i < 18; i += 1) {
-        const star = document.createElement('div');
-        star.className = 'star-burst';
-        star.textContent = icons[i % icons.length];
-        star.style.left = (8 + Math.random() * 84) + '%';
-        star.style.bottom = (10 + Math.random() * 12) + '%';
-        star.style.animationDelay = (Math.random() * 0.22) + 's';
-        star.style.fontSize = (1.2 + Math.random() * 1.2) + 'rem';
-        starsLayer.appendChild(star);
-      }
-
-      const confettiColors = ['#ff6b6b', '#ffd93d', '#6bcB77', '#4d96ff', '#c77dff', '#ff8fab'];
-      for (let i = 0; i < 24; i += 1) {
-        const piece = document.createElement('div');
-        piece.className = 'confetti-piece';
-        piece.style.left = (4 + Math.random() * 92) + '%';
-        piece.style.top = (-10 - Math.random() * 25) + 'px';
-        piece.style.background = confettiColors[i % confettiColors.length];
-        piece.style.animationDelay = (Math.random() * 0.35) + 's';
-        piece.style.transform = 'rotate(' + Math.round(Math.random() * 180) + 'deg)';
-        starsLayer.appendChild(piece);
-      }
-    }
-
-    function showCelebration(title, text, options = {}) {
-      celebrationBadge.textContent = options.badge || '⭐ ሀብሮም!';
-      celebrationTitle.textContent = title;
-      celebrationText.textContent = text;
-      celebrationNextBtn.style.display = options.showNext === false ? 'none' : 'inline-flex';
-      celebrationContinueBtn.textContent = options.continueLabel || 'Continue';
-      celebrationNextBtn.textContent = options.nextLabel || 'Go to New Stage';
-      celebrationOverlay.style.display = 'flex';
-      launchStars();
-    }
-
-    function hideCelebration() {
-      celebrationOverlay.style.display = 'none';
-      starsLayer.innerHTML = '';
-    }
-
-    function stopAudio() {
-      document.querySelectorAll('audio').forEach(audio => {
-        try {
-          audio.pause();
-          audio.currentTime = 0;
-        } catch (e) {}
-      });
-    }
-
-    function playCorrectChime() {
+export default function AlphabetSoundPractice() {
+  const { useEffect, useMemo, useRef, useState } = React;
+
+  const baseRows = [
+    ['ሀ','ሁ','ሂ','ሃ','ሄ','ህ','ሆ'],
+    ['ለ','ሉ','ሊ','ላ','ሌ','ል','ሎ'],
+    ['ሐ','ሑ','ሒ','ሓ','ሔ','ሕ','ሖ'],
+    ['መ','ሙ','ሚ','ማ','ሜ','ም','ሞ'],
+    ['ሰ','ሱ','ሲ','ሳ','ሴ','ስ','ሶ'],
+    ['ረ','ሩ','ሪ','ራ','ሬ','ር','ሮ'],
+    ['ሸ','ሹ','ሺ','ሻ','ሼ','ሽ','ሾ'],
+    ['ቀ','ቁ','ቂ','ቃ','ቄ','ቅ','ቆ'],
+    ['በ','ቡ','ቢ','ባ','ቤ','ብ','ቦ'],
+    ['ተ','ቱ','ቲ','ታ','ቴ','ት','ቶ'],
+    ['ነ','ኑ','ኒ','ና','ኔ','ን','ኖ'],
+    ['አ','ኡ','ኢ','ኣ','ኤ','እ','ኦ'],
+    ['ከ','ኩ','ኪ','ካ','ኬ','ክ','ኮ'],
+    ['ጸ','ጹ','ጺ','ጻ','ጼ','ጽ','ጾ']
+  ];
+
+  const baseRows2 = [
+    ['ሠ','ሡ','ሢ','ሣ','ሤ','ሥ','ሦ'],
+    ['ኀ','ኁ','ኂ','ኃ','ኄ','ኅ','ኆ'],
+    ['ፀ','ፁ','ፂ','ፃ','ፄ','ፅ','ፆ'],
+    ['ዘ','ዙ','ዚ','ዛ','ዜ','ዝ','ዞ'],
+    ['ዠ','ዡ','ዢ','ዣ','ዤ','ዥ','ዦ'],
+    ['የ','ዩ','ዪ','ያ','ዬ','ይ','ዮ'],
+    ['ደ','ዱ','ዲ','ዳ','ዴ','ድ','ዶ'],
+    ['ገ','ጉ','ጊ','ጋ','ጌ','ግ','ጎ'],
+    ['ጠ','ጡ','ጢ','ጣ','ጤ','ጥ','ጦ'],
+    ['ጨ','ጩ','ጪ','ጫ','ጬ','ጭ','ጮ'],
+    ['ወ','ዉ','ዊ','ዋ','ዌ','ው','ዎ'],
+    ['ዐ','ዑ','ዒ','ዓ','ዔ','ዕ','ዖ'],
+    ['ፈ','ፉ','ፊ','ፋ','ፌ','ፍ','ፎ']
+  ];
+
+  const primaryLetters = useMemo(() => baseRows.map((row) => row[0]).filter(Boolean), []);
+  const secondaryLetters = useMemo(() => baseRows2.map((row) => row[0]).filter(Boolean), []);
+
+  const [introOpen, setIntroOpen] = useState(true);
+  const [currentTab, setCurrentTab] = useState(1);
+  const [target, setTarget] = useState(null);
+  const [score, setScore] = useState(0);
+  const [rounds, setRounds] = useState(0);
+  const [message, setMessage] = useState('The first sound will play after you tap Start on the welcome screen.');
+  const [helperNote, setHelperNote] = useState('Tap Start / Hear Again to begin.');
+  const [recordedAudio, setRecordedAudio] = useState({});
+  const [loadedSounds, setLoadedSounds] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [masteryPrimary, setMasteryPrimary] = useState(() => new Set());
+  const [masterySecondary, setMasterySecondary] = useState(() => new Set());
+  const [celebration, setCelebration] = useState(null);
+  const currentAudioRef = useRef(null);
+
+  const accuracy = rounds === 0 ? 0 : Math.round((score / rounds) * 100);
+  const unlockedText = currentTab === 2 || masteryPrimary.size === primaryLetters.length ? '2/2' : '1/2';
+  const visibleLetters = currentTab === 1 ? primaryLetters : secondaryLetters;
+  const activeMastery = currentTab === 1 ? masteryPrimary : masterySecondary;
+  const activePlayable = currentTab === 1
+    ? primaryLetters.filter((s) => typeof recordedAudio[s] === 'string' && recordedAudio[s].trim())
+    : secondaryLetters.filter((s) => typeof recordedAudio[s] === 'string' && recordedAudio[s].trim());
+
+  function stopAudio() {
+    if (currentAudioRef.current) {
       try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextClass) return;
-        const ctx = new AudioContextClass();
-        const now = ctx.currentTime;
-        const notes = [523.25, 659.25, 783.99];
-
-        notes.forEach((freq, index) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, now + index * 0.08);
-          gain.gain.setValueAtTime(0.0001, now + index * 0.08);
-          gain.gain.exponentialRampToValueAtTime(0.12, now + index * 0.08 + 0.01);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.08 + 0.22);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(now + index * 0.08);
-          osc.stop(now + index * 0.08 + 0.24);
-        });
-      } catch (e) {}
+        currentAudioRef.current.pause();
+        currentAudioRef.current.currentTime = 0;
+      } catch {}
+      currentAudioRef.current = null;
     }
+  }
 
-    function playSound(symbol) {
-      if (!symbol) return;
-      stopAudio();
-      const soundValue = recordedAudio[symbol];
-      if (!soundValue || typeof soundValue !== 'string' || !soundValue.trim()) {
-        messageEl.textContent = 'I could not find a sound for this letter in sounds.json.';
-        helperNoteEl.textContent = 'Check that sounds.json contains a real sound entry for ' + symbol + '.';
-        return;
-      }
-      const audio = new Audio(soundValue);
-      audio.play().catch(() => {
-        messageEl.textContent = 'Sound playback was blocked or the audio file path is not reachable.';
-        helperNoteEl.textContent = 'Check the audio path in sounds.json and make sure the .mp3 file exists on GitHub Pages.';
+  function playCorrectChime() {
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      const now = ctx.currentTime;
+      const notes = [523.25, 659.25, 783.99];
+      notes.forEach((freq, index) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + index * 0.08);
+        gain.gain.setValueAtTime(0.0001, now + index * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.12, now + index * 0.08 + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.08 + 0.22);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + index * 0.08);
+        osc.stop(now + index * 0.08 + 0.24);
       });
+    } catch {}
+  }
+
+  function playSound(symbol) {
+    if (!symbol) return;
+    stopAudio();
+    const soundValue = recordedAudio[symbol];
+    if (!soundValue || typeof soundValue !== 'string' || !soundValue.trim()) {
+      setMessage('No sound was found for this letter.');
+      setHelperNote('This letter does not yet have an audio file.');
+      return;
+    }
+    const audio = new Audio(soundValue);
+    currentAudioRef.current = audio;
+    audio.play().catch(() => {
+      setMessage('Sound playback was blocked or the file path is not reachable.');
+      setHelperNote('Check your browser audio permissions and file paths.');
+    });
+  }
+
+  function chooseAndPlayNext(tab = currentTab) {
+    const pool = tab === 1
+      ? primaryLetters.filter((s) => typeof recordedAudio[s] === 'string' && recordedAudio[s].trim())
+      : secondaryLetters.filter((s) => typeof recordedAudio[s] === 'string' && recordedAudio[s].trim());
+
+    if (!pool.length) {
+      setTarget(null);
+      setGameStarted(false);
+      setMessage('This tab has no playable sounds yet.');
+      setHelperNote('Add audio files for this tab, then press Start / Hear Again.');
+      return;
     }
 
-    function clearLetterStates() {
-      document.querySelectorAll('.letter-btn').forEach(btn => btn.classList.remove('correct', 'wrong'));
-    }
+    const masterySet = tab === 1 ? masteryPrimary : masterySecondary;
+    const remaining = pool.filter((symbol) => !masterySet.has(symbol));
+    const candidates = remaining.length ? remaining : pool;
+    const next = candidates[Math.floor(Math.random() * candidates.length)];
+    setTarget(next);
+    setGameStarted(true);
+    setMessage('Listen carefully and tap the matching letter.');
+    setHelperNote('Tap Start / Hear Again to replay the current sound.');
+    setTimeout(() => playSound(next), 120);
+  }
 
-    function buildVariantButtons() {
-      variantGrid.style.display = 'grid';
-      variantGrid.style.gridTemplateColumns = 'repeat(2, minmax(100px, 1fr))';
-      variantGrid.style.maxWidth = '240px';
-      variantGrid.style.gap = '10px';
-      variantGrid.innerHTML = `
-        <button class="variant-btn ${currentTab === 1 ? 'active' : ''}" id="firstPaneToggle" type="button">ግእዝ (1)</button>
-        <button class="variant-btn ${currentTab === 2 ? 'active' : ''}" id="secondPaneToggle" type="button">ግእዝ (2)</button>
-      `;
-
-      document.getElementById('firstPaneToggle').addEventListener('click', () => {
-        currentTab = 1;
-        letterGrid.style.display = 'grid';
-        letterGrid2.style.display = 'none';
-        buildVariantButtons();
-        updateStageNote();
-      });
-
-      document.getElementById('secondPaneToggle').addEventListener('click', () => {
-        currentTab = 2;
-        letterGrid.style.display = 'none';
-        letterGrid2.style.display = 'grid';
-        buildVariantButtons();
-        updateStageNote();
-      });
-
-      letterGrid.style.display = currentTab === 1 ? 'grid' : 'none';
-      letterGrid2.style.display = currentTab === 2 ? 'grid' : 'none';
-    }
-
-    function buildLetterButtons() {
-      letterGrid.innerHTML = '';
-      const visiblePrimary = getVariantSymbols(currentVariantIndex);
-      visiblePrimary.forEach(symbol => {
-        const btn = document.createElement('button');
-        btn.className = 'letter-btn';
-        btn.type = 'button';
-        btn.textContent = symbol;
-        btn.setAttribute('aria-label', 'Choose letter ' + symbol);
-        btn.addEventListener('click', () => handleGuess(symbol, btn));
-        letterGrid.appendChild(btn);
-      });
-      const totalVisible = visiblePrimary.length + getVariantSymbols2(currentVariantIndex).length;
-      symbolCountPill.textContent = totalVisible + ' letters';
-    }
-
-    function buildConfusingLetterButtons() {
-      letterGrid2.innerHTML = '';
-      const visibleSecondary = getVariantSymbols2(0);
-      visibleSecondary.forEach(symbol => {
-        const btn = document.createElement('button');
-        btn.className = 'letter-btn';
-        btn.type = 'button';
-        btn.textContent = symbol;
-        btn.setAttribute('aria-label', 'Choose second group letter ' + symbol);
-        btn.addEventListener('click', () => handleGuess(symbol, btn));
-        letterGrid2.appendChild(btn);
-      });
-    }
-
-    function updateStageNote() {
-      const totalPrimary = getVariantSymbols(0).length;
-      const totalSecondary = getVariantSymbols2(0).length;
-      const mastered = currentTab === 1 ? masteryPrimary.size : masterySecondary.size;
-      const totalVisible = currentTab === 1 ? totalPrimary : totalSecondary;
-      activeVariantNote.textContent = 'Active stage: ' + (currentTab === 1 ? 'ግእዝ (1)' : 'ግእዝ (2)') + '. Mastered ' + mastered + ' of ' + totalVisible + ' letters.';
-    }
-
-    function selectVariant(index) {
-      currentTab = index === 2 ? 2 : 1;
-      target = null;
-      gameStarted = false;
-      buildVariantButtons();
-      buildLetterButtons();
-      buildConfusingLetterButtons();
-      updateStageNote();
-      messageEl.textContent = 'Tap Start / Hear Again to begin.';
-      helperNoteEl.textContent = 'Choose a tab, then press Start / Hear Again.';
-    }
-
-    function pickRandomTarget() {
-      const activePool = currentTab === 1 ? getPlayableSymbolsForVariant(0) : getPlayableSymbolsForVariant2(0);
-      if (!activePool.length) {
-        target = null;
-        gameStarted = false;
-        messageEl.textContent = 'This tab has no playable sounds yet.';
-        helperNoteEl.textContent = 'Add audio files for this tab, then press Start / Hear Again.';
-        return;
-      }
-
-      clearLetterStates();
-      const masterySet = currentTab === 1 ? masteryPrimary : masterySecondary;
-      const remaining = activePool.filter(symbol => !masterySet.has(symbol));
-      const candidates = remaining.length ? remaining : activePool;
-      target = candidates[Math.floor(Math.random() * candidates.length)];
-      gameStarted = true;
-      messageEl.textContent = 'Listen carefully and tap the matching letter.';
-      helperNoteEl.textContent = 'Tap Start / Hear Again to replay the current sound.';
-      setTimeout(() => playSound(target), 120);
-    }
-
-    function unlockNextVariantIfReady() {
-      const totalPrimary = getVariantSymbols(0).length;
-      const totalSecondary = getVariantSymbols2(0).length;
-
-      if (currentTab === 1) {
-        if (masteryPrimary.size < totalPrimary) {
-          updateStageNote();
-          return false;
-        }
-
-        showCelebration(
-          '🎉 Tab 1 Complete! 🎉',
-          'Wonderful! You finished ግእዝ (1). Now let us practice ግእዝ (2).',
-          {
-            badge: '🌟 Great Job! 🌟',
-            continueLabel: 'Open ግእዝ (2)',
-            nextLabel: 'Open ግእዝ (2)'
-          }
-        );
-        return true;
-      }
-
-      if (masterySecondary.size < totalSecondary) {
-        updateStageNote();
+  async function loadSounds() {
+    try {
+      const response = await fetch('sounds.json', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Could not load sounds.json');
+      const data = await response.json();
+      const resolvedMap = data.symbols && typeof data.symbols === 'object' ? data.symbols : data;
+      const usableEntries = Object.entries(resolvedMap).filter(([, value]) => typeof value === 'string' && value.trim());
+      const mapped = Object.fromEntries(usableEntries);
+      setRecordedAudio(mapped);
+      setLoadedSounds(usableEntries.length > 0);
+      if (!usableEntries.length) {
+        setMessage('sounds.json loaded, but it does not contain any usable sound paths yet.');
+        setHelperNote('Add entries like "ሀ": "audio/ሀ.mp3".');
         return false;
       }
-
-      showCelebration(
-        '🏆 Amazing! You finished both tabs! 🏆',
-        'You completed ግእዝ (1) and ግእዝ (2). Fantastic work!',
-        {
-          badge: '🎊 Superstar! 🎊',
-          continueLabel: 'Play Again',
-          showNext: false
-        }
-      );
+      setHelperNote('Sounds loaded! The first sound will play now.');
       return true;
+    } catch {
+      setRecordedAudio({});
+      setLoadedSounds(false);
+      setMessage('The page could not load sounds.json.');
+      setHelperNote('Keep sounds.json beside this HTML file and make sure it contains valid audio paths.');
+      return false;
+    }
+  }
+
+  function handleGuess(symbol) {
+    if (!gameStarted || !target) {
+      setMessage('Tap Start / Hear Again to begin.');
+      return;
+    }
+    if (!activePlayable.includes(symbol)) {
+      setMessage('This letter does not have a recorded sound yet.');
+      setHelperNote('Use letters with audio in the open tab, or add the missing sound file.');
+      return;
     }
 
-    function handleGuess(symbol, button) {
-      if (!gameStarted || !target) {
-        messageEl.textContent = 'Tap Start / Hear Again to begin.';
-        return;
-      }
+    setRounds((r) => r + 1);
 
-      const activePool = currentTab === 1 ? getPlayableSymbolsForVariant(0) : getPlayableSymbolsForVariant2(0);
-      if (!activePool.includes(symbol)) {
-        messageEl.textContent = 'This letter does not have a recorded sound yet.';
-        helperNoteEl.textContent = 'Use letters with audio in the open tab, or add the missing sound file.';
-        return;
-      }
+    if (symbol === target) {
+      setScore((s) => s + 1);
+      playCorrectChime();
 
-      rounds += 1;
-      clearLetterStates();
-
-      if (symbol === target) {
-        score += 1;
-        const masterySet = currentTab === 1 ? masteryPrimary : masterySecondary;
-        masterySet.add(symbol);
-        button.classList.add('correct');
-        playCorrectChime();
-        updateStats();
-        updateStageNote();
-        const stageCompleted = unlockNextVariantIfReady();
-        if (stageCompleted) return;
-
-        setTimeout(() => {
-          messageEl.textContent = 'Wonderful! Here comes the next sound.';
-          pickRandomTarget();
-        }, 900);
-      } else {
-        button.classList.add('wrong');
-        updateStats();
-        messageEl.textContent = 'Almost! Listen again and try once more.';
-        helperNoteEl.textContent = 'You are still working in ' + (currentTab === 1 ? 'ግእዝ (1)' : 'ግእዝ (2)') + '.';
-        setTimeout(() => playSound(target), 260);
-      }
-    }
-
-    async function loadSounds() {
-      try {
-        const response = await fetch('sounds.json', { cache: 'no-store' });
-        if (!response.ok) throw new Error('Could not load sounds.json');
-        const data = await response.json();
-        if (!data || typeof data !== 'object') throw new Error('Invalid sounds.json format');
-
-        const resolvedMap = data.symbols && typeof data.symbols === 'object' ? data.symbols : data;
-        const usableEntries = Object.entries(resolvedMap).filter(([_, value]) => typeof value === 'string' && value.trim());
-
-        recordedAudio = Object.fromEntries(usableEntries);
-        refreshVariantAvailability();
-        activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
-        secondarySymbols = getPlayableSymbolsForVariant2(currentVariantIndex);
-        buildVariantButtons();
-        buildLetterButtons();
-        buildConfusingLetterButtons();
-        updateStageNote();
-        updateStats();
-
-        if (!usableEntries.length) {
-          messageEl.textContent = 'sounds.json loaded, but it does not contain any usable sound paths yet.';
-          helperNoteEl.textContent = 'Add entries like "ሀ": "audio/ሀ.mp3".';
+      if (currentTab === 1) {
+        const nextSet = new Set(masteryPrimary);
+        nextSet.add(symbol);
+        setMasteryPrimary(nextSet);
+        if (nextSet.size === primaryLetters.length) {
+          setGameStarted(false);
+          setTarget(null);
+          setCelebration({
+            title: '🎉 Tab 1 Complete! 🎉',
+            text: 'Wonderful! You finished ግእዝ (1). Now let us practice ግእዝ (2).',
+            badge: '🌟 Great Job! 🌟',
+            continueLabel: 'Open ግእዝ (2)',
+            nextLabel: 'Open ግእዝ (2)',
+            final: false
+          });
           return;
         }
-
-        const readyStages = variantPlayableCounts.filter(count => count > 0).length;
-        helperNoteEl.textContent = 'Sounds loaded! Found ' + usableEntries.length + ' playable sound entries and ' + readyStages + ' playable stage(s). Tap Start / Hear Again to begin.';
-      } catch (error) {
-        recordedAudio = {};
-        refreshVariantAvailability();
-        activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
-        secondarySymbols = getPlayableSymbolsForVariant2(currentVariantIndex);
-        buildVariantButtons();
-        buildLetterButtons();
-        buildConfusingLetterButtons();
-        updateStageNote();
-        messageEl.textContent = 'The page could not load sounds.json.';
-        helperNoteEl.textContent = 'On GitHub Pages, keep sounds.json beside this HTML file and make sure the JSON contains real .mp3 audio paths.';
+      } else {
+        const nextSet = new Set(masterySecondary);
+        nextSet.add(symbol);
+        setMasterySecondary(nextSet);
+        if (nextSet.size === secondaryLetters.length) {
+          setGameStarted(false);
+          setTarget(null);
+          setCelebration({
+            title: '🏆 Amazing! You finished both tabs! 🏆',
+            text: 'You completed ግእዝ (1) and ግእዝ (2). Fantastic work!',
+            badge: '🎊 Superstar! 🎊',
+            continueLabel: 'Play Again',
+            nextLabel: '',
+            final: true
+          });
+          return;
+        }
       }
+
+      setMessage('Wonderful! Here comes the next sound.');
+      setTimeout(() => chooseAndPlayNext(), 900);
+    } else {
+      setMessage('Almost! Listen again and try once more.');
+      setHelperNote('You are still working in ' + (currentTab === 1 ? 'ግእዝ (1)' : 'ግእዝ (2)') + '.');
+      setTimeout(() => playSound(target), 260);
+    }
+  }
+
+  function handleReplay() {
+    if (!activePlayable.length) {
+      setMessage('This tab has no playable sounds yet.');
+      setHelperNote('Check your audio files for the open tab.');
+      return;
+    }
+    if (!target || !gameStarted || !activePlayable.includes(target)) {
+      chooseAndPlayNext();
+      return;
+    }
+    playSound(target);
+  }
+
+  function handleCelebrationContinue() {
+    const isFinal = celebration?.final;
+    setCelebration(null);
+
+    if (!isFinal) {
+      setCurrentTab(2);
+      setMessage('Great! Now listen for a sound from ግእዝ (2).');
+      setHelperNote('You finished the first tab. Let us begin the second tab.');
+      setTimeout(() => chooseAndPlayNext(2), 100);
+      return;
     }
 
-    enterGameBtn.addEventListener('click', async () => {
-      introOverlay.style.display = 'none';
-      await loadSounds();
-      currentTab = 1;
-      buildVariantButtons();
-      updateStageNote();
-      pickRandomTarget();
-    });
+    setScore(0);
+    setRounds(0);
+    setTarget(null);
+    setGameStarted(false);
+    setCurrentTab(1);
+    setMasteryPrimary(new Set());
+    setMasterySecondary(new Set());
+    setMessage('Amazing! Tap Start / Hear Again to play from the beginning.');
+    setHelperNote('You completed both tabs. Ready for another round?');
+  }
 
-    celebrationContinueBtn.addEventListener('click', () => {
-      hideCelebration();
+  function handleCelebrationNext() {
+    if (!celebration || celebration.final) return;
+    setCelebration(null);
+    setCurrentTab(2);
+    setTimeout(() => chooseAndPlayNext(2), 100);
+  }
 
-      if (currentTab === 1 && masteryPrimary.size === getVariantSymbols(0).length) {
-        currentTab = 2;
-        buildVariantButtons();
-        updateStageNote();
-        messageEl.textContent = 'Great! Now listen for a sound from ግእዝ (2).';
-        helperNoteEl.textContent = 'You finished the first tab. Let us begin the second tab.';
-        pickRandomTarget();
-        return;
-      }
+  async function handleIntroStart() {
+    setIntroOpen(false);
+    const ok = await loadSounds();
+    setCurrentTab(1);
+    if (ok) {
+      setTimeout(() => chooseAndPlayNext(1), 100);
+    }
+  }
 
-      if (currentTab === 2 && masterySecondary.size === getVariantSymbols2(0).length) {
-        score = 0;
-        rounds = 0;
-        target = null;
-        gameStarted = false;
-        currentTab = 1;
-        masteryPrimary.clear();
-        masterySecondary.clear();
-        buildVariantButtons();
-        buildLetterButtons();
-        buildConfusingLetterButtons();
-        updateStats();
-        updateStageNote();
-        messageEl.textContent = 'Amazing! Tap Start / Hear Again to play from the beginning.';
-        helperNoteEl.textContent = 'You completed both tabs. Ready for another round?';
-      }
-    });
+  useEffect(() => {
+    return () => stopAudio();
+  }, []);
 
-    celebrationNextBtn.addEventListener('click', () => {
-      hideCelebration();
-      if (currentTab === 1 && masteryPrimary.size === getVariantSymbols(0).length) {
-        currentTab = 2;
-        buildVariantButtons();
-        updateStageNote();
-        pickRandomTarget();
-      }
-    });
+  return (
+    <>
+      <style>{`
+        :root {
+          --sky1: #8fdcff;
+          --sky2: #d9f5ff;
+          --grass1: #97df72;
+          --grass2: #76c95d;
+          --card: rgba(255,255,255,0.92);
+          --text: #1f2937;
+          --muted: #5b6678;
+          --gold: #f4b400;
+          --shadow: 0 18px 40px rgba(31, 41, 55, 0.16);
+          --border: rgba(255,255,255,0.65);
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; }
+      `}</style>
+      <div style={{ minHeight: '100vh', fontFamily: 'Trebuchet MS, Segoe UI, Arial, sans-serif', color: 'var(--text)', background: 'radial-gradient(circle at top left, rgba(255,255,255,0.8), transparent 24%), radial-gradient(circle at 85% 15%, rgba(255,255,255,0.7), transparent 18%), linear-gradient(180deg, var(--sky1) 0%, var(--sky2) 42%, #fff6bf 72%, #b8ec8a 100%)', overflowX: 'hidden' }}>
+        <div className="scene" aria-hidden="true">
+          <div className="cloud one"></div>
+          <div className="cloud two"></div>
+          <div className="hill one"></div>
+          <div className="hill two"></div>
+          <div className="hill three"></div>
+        </div>
 
-    replayBtn.addEventListener('click', () => {
-      const activePool = currentTab === 1
-        ? getPlayableSymbolsForVariant(currentVariantIndex)
-        : getPlayableSymbolsForVariant2(currentVariantIndex);
+        {introOpen && (
+          <div className="intro-overlay">
+            <div className="card intro-card">
+              <div className="intro-text">
+                <div className="badge">🌟 Welcome . መርሐባ!</div>
+                <h1>ምልከት ፊደላት</h1>
+                <p>Welcome! This app will help you to master the Geez Fidelat. Listen to a letter sound, tap the matching Geez letter.</p>
+                <button className="start-big" type="button" onClick={handleIntroStart}>🎉 Start / ንስማዕ</button>
+              </div>
+              <div className="intro-art" aria-hidden="true">
+                <svg viewBox="0 0 540 320" role="img">
+                  <circle cx="456" cy="60" r="28" fill="#ffd95e" />
+                  <ellipse cx="120" cy="250" rx="90" ry="30" fill="#9de37b" />
+                  <ellipse cx="280" cy="262" rx="110" ry="36" fill="#94db74" />
+                  <ellipse cx="442" cy="252" rx="88" ry="30" fill="#86d667" />
+                  <g transform="translate(220 70)">
+                    <circle cx="48" cy="44" r="30" fill="#6f452d" />
+                    <rect x="16" y="74" width="64" height="70" rx="20" fill="#ffcf66" />
+                    <circle cx="48" cy="42" r="19" fill="#8d5b3d" />
+                    <rect x="91" y="70" width="78" height="58" rx="12" fill="#ffffff" stroke="#60a5fa" strokeWidth="4" />
+                    <text x="130" y="106" fontSize="26" textAnchor="middle" fill="#1d4ed8" fontWeight="900">ሀ ሁ</text>
+                  </g>
+                </svg>
+              </div>
+            </div>
+          </div>
+        )}
 
-      if (!activePool.length) {
-        messageEl.textContent = 'This letter group has no playable sounds yet.';
-        helperNoteEl.textContent = 'Check sounds.json and your audio files for this group.';
-        return;
-      }
+        {celebration && (
+          <div className="celebration-overlay" style={{ display: 'flex' }}>
+            <div className="card celebration-card" style={{ animation: 'popIn 0.22s ease-out' }}>
+              <div className="stars-layer" id="starsLayer"></div>
+              <div className="badge">{celebration.badge}</div>
+              <h2>{celebration.title}</h2>
+              <p>{celebration.text}</p>
+              <div className="celebration-actions">
+                <button className="celebration-btn celebration-primary" type="button" onClick={handleCelebrationContinue}>{celebration.continueLabel}</button>
+                {!celebration.final && <button className="celebration-btn celebration-secondary" type="button" onClick={handleCelebrationNext}>{celebration.nextLabel}</button>}
+              </div>
+            </div>
+          </div>
+        )}
 
-      if (!target || !gameStarted || !activePool.includes(target)) {
-        pickRandomTarget();
-        return;
-      }
+        <div className="container">
+          <section className="top-grid">
+            <div className="card hero-copy">
+              <div className="badge">🌈 Listen • Match • Unlock</div>
+              <h1>ምልከት ፊደላት</h1>
+              <p className="subtitle">Practice the two Geez tabs one after the other.</p>
+              <div className="stats" aria-label="Game statistics">
+                <div className="stat"><div className="stat-label">Score</div><div className="stat-value">{score}</div></div>
+                <div className="stat"><div className="stat-label">Rounds</div><div className="stat-value">{rounds}</div></div>
+                <div className="stat"><div className="stat-label">Accuracy</div><div className="stat-value">{accuracy}%</div></div>
+                <div className="stat"><div className="stat-label">Unlocked</div><div className="stat-value">{unlockedText}</div></div>
+              </div>
+            </div>
+          </section>
 
-      playSound(target);
-    });
+          <section className="main-grid">
+            <div className="card panel">
+              <div className="letters-top">
+                <button className="action-btn sound-btn" type="button" style={{ minHeight: 48, padding: '0 16px', fontSize: '0.95rem' }} onClick={handleReplay}>▶ Start / Hear Again</button>
+                <h2>Choose the matching letter.</h2>
+                <span className="pill">{visibleLetters.length} letters</span>
+              </div>
 
-    refreshVariantAvailability();
-    activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
-    secondarySymbols = getPlayableSymbolsForVariant2(currentVariantIndex);
-    buildVariantButtons();
-    buildLetterButtons();
-    buildConfusingLetterButtons();
-    updateStats();
-    updateStageNote();
-    loadSounds();
-  </script>
-</body>
-</html>
+              <div className="variant-grid">
+                <button className={`variant-btn ${currentTab === 1 ? 'active' : ''}`} type="button" onClick={() => setCurrentTab(1)}>ግእዝ (1)</button>
+                <button className={`variant-btn ${currentTab === 2 ? 'active' : ''}`} type="button" onClick={() => setCurrentTab(2)}>ግእዝ (2)</button>
+              </div>
+
+              <div className="letter-grid" style={{ display: currentTab === 1 ? 'grid' : 'none' }}>
+                {primaryLetters.map((symbol) => (
+                  <button key={symbol} className="letter-btn" type="button" onClick={() => handleGuess(symbol)}>{symbol}</button>
+                ))}
+              </div>
+
+              <div className="letter-grid" style={{ display: currentTab === 2 ? 'grid' : 'none' }}>
+                {secondaryLetters.map((symbol) => (
+                  <button key={symbol} className="letter-btn" type="button" onClick={() => handleGuess(symbol)}>{symbol}</button>
+                ))}
+              </div>
+
+              <div className="mini-note">Active stage: {currentTab === 1 ? 'ግእዝ (1)' : 'ግእዝ (2)'}. Mastered {activeMastery.size} of {visibleLetters.length} letters.</div>
+              <div className="helper-note">{helperNote}</div>
+              <div className="message">{message}</div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </>
+  );
+}
