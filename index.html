@@ -951,12 +951,13 @@
     }
 
     function pickRandomTarget() {
-      activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
-      secondarySymbols = getPlayableSymbolsForVariant2(currentVariantIndex);
-      const activePool = currentTab === 2 ? secondarySymbols : activeSymbols;
+      const activePool = currentTab === 1
+        ? getPlayableSymbolsForVariant(currentVariantIndex)
+        : getPlayableSymbolsForVariant2(currentVariantIndex);
 
       if (!activePool.length) {
         target = null;
+        gameStarted = false;
         messageEl.textContent = 'This letter group has no playable sounds yet.';
         helperNoteEl.textContent = 'Add one or more .mp3 audio files for this group to make it playable.';
         return;
@@ -965,8 +966,8 @@
       clearLetterStates();
       const mastered = masterySets[currentVariantIndex];
       const remaining = activePool.filter(symbol => !mastered.has(symbol));
-      const pool = remaining.length ? remaining : activePool;
-      target = pool[Math.floor(Math.random() * pool.length)];
+      const candidates = remaining.length ? remaining : activePool;
+      target = candidates[Math.floor(Math.random() * candidates.length)];
       gameStarted = true;
       messageEl.textContent = 'Listen carefully and tap the matching letter.';
       helperNoteEl.textContent = 'You can tap Start / Hear Again to replay the sound.';
@@ -1021,10 +1022,13 @@
         return;
       }
 
-      const activePool = currentTab === 2 ? secondarySymbols : activeSymbols;
+      const activePool = currentTab === 1
+        ? getPlayableSymbolsForVariant(currentVariantIndex)
+        : getPlayableSymbolsForVariant2(currentVariantIndex);
+
       if (!activePool.includes(symbol)) {
-        messageEl.textContent = 'Choose a letter from the open group.';
-        helperNoteEl.textContent = 'The sound comes from the currently open group only.';
+        messageEl.textContent = 'This letter does not have a recorded sound yet.';
+        helperNoteEl.textContent = 'Use letters with audio in the open group, or add the missing .mp3 file.';
         return;
       }
 
@@ -1039,10 +1043,7 @@
         updateStats();
         updateStageNote();
         const stageCompleted = unlockNextVariantIfReady();
-
-        if (stageCompleted && masterySets[currentVariantIndex].size === (getVariantSymbols(currentVariantIndex).length + getVariantSymbols2(currentVariantIndex).length)) {
-          return;
-        }
+        if (stageCompleted) return;
 
         setTimeout(() => {
           messageEl.textContent = 'Wonderful! Here comes the next sound.';
@@ -1127,16 +1128,21 @@
     });
 
     replayBtn.addEventListener('click', () => {
-      const activePool = currentTab === 2 ? getPlayableSymbolsForVariant2(currentVariantIndex) : getPlayableSymbolsForVariant(currentVariantIndex);
+      const activePool = currentTab === 1
+        ? getPlayableSymbolsForVariant(currentVariantIndex)
+        : getPlayableSymbolsForVariant2(currentVariantIndex);
+
       if (!activePool.length) {
         messageEl.textContent = 'This letter group has no playable sounds yet.';
         helperNoteEl.textContent = 'Check sounds.json and your audio files for this group.';
         return;
       }
+
       if (!target || !gameStarted || !activePool.includes(target)) {
         pickRandomTarget();
         return;
       }
+
       playSound(target);
     });
 
