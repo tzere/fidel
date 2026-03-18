@@ -173,19 +173,16 @@
 
     .top-grid {
       display: grid;
-      grid-template-columns: 1.05fr 0.95fr;
-      gap: 24px;
-      margin-bottom: 24px;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
     }
 
     .hero-copy,
-    .hero-art,
-    .panel { padding: 24px; }
+    .panel { padding: 20px; }
 
     .hero-art {
-      min-height: 280px;
-      overflow: hidden;
-      background: linear-gradient(180deg, rgba(255,255,255,0.46), rgba(255,255,255,0.08));
+      display: none;
     }
 
     .stats {
@@ -217,8 +214,8 @@
 
     .main-grid {
       display: grid;
-      grid-template-columns: 390px 1fr;
-      gap: 24px;
+      grid-template-columns: 1fr;
+      gap: 18px;
     }
 
     .prompt-wrap {
@@ -326,8 +323,8 @@
 
     .variant-grid {
       grid-template-columns: 1fr;
-      max-width: 220px;
-      margin-bottom: 20px;
+      max-width: 120px;
+      margin-bottom: 12px;
     }
 
     .letter-grid {
@@ -346,8 +343,10 @@
     }
 
     .variant-btn {
-      font-size: 1.05rem;
-      padding: 10px;
+      font-size: 0.92rem;
+      padding: 8px 10px;
+      min-height: 48px;
+      border-radius: 16px;
     }
 
     .variant-btn.active {
@@ -635,85 +634,23 @@
           </div>
         </div>
       </div>
-
-      <div class="card hero-art" aria-hidden="true">
-        <svg viewBox="0 0 540 320" role="img">
-          <defs>
-            <linearGradient id="dress1b" x1="0" x2="1">
-              <stop offset="0%" stop-color="#ff8fb3" />
-              <stop offset="100%" stop-color="#ffb347" />
-            </linearGradient>
-            <linearGradient id="dress2b" x1="0" x2="1">
-              <stop offset="0%" stop-color="#6ee7ff" />
-              <stop offset="100%" stop-color="#8b5cf6" />
-            </linearGradient>
-            <linearGradient id="shirtb" x1="0" x2="1">
-              <stop offset="0%" stop-color="#ffe36e" />
-              <stop offset="100%" stop-color="#ff9f43" />
-            </linearGradient>
-          </defs>
-          <circle cx="455" cy="60" r="28" fill="#ffd95e" />
-          <ellipse cx="120" cy="250" rx="90" ry="30" fill="#9de37b" />
-          <ellipse cx="280" cy="262" rx="110" ry="36" fill="#94db74" />
-          <ellipse cx="442" cy="252" rx="88" ry="30" fill="#86d667" />
-          <g transform="translate(70 88)">
-            <circle cx="42" cy="38" r="28" fill="#7a4b2f" />
-            <path d="M18 62 Q42 78 66 62 L72 132 L12 132 Z" fill="url(#dress1b)" />
-            <circle cx="32" cy="36" r="18" fill="#8d5b3d" />
-            <path d="M14 35 Q32 4 50 35" fill="#2e1a12" />
-            <circle cx="26" cy="38" r="2.5" fill="#1f2937" />
-            <circle cx="38" cy="38" r="2.5" fill="#1f2937" />
-            <path d="M26 47 Q32 52 38 47" stroke="#7c2d12" stroke-width="2.5" fill="none" stroke-linecap="round" />
-          </g>
-          <g transform="translate(220 70)">
-            <circle cx="48" cy="44" r="30" fill="#6f452d" />
-            <rect x="16" y="74" width="64" height="70" rx="20" fill="url(#shirtb)" />
-            <circle cx="48" cy="42" r="19" fill="#8d5b3d" />
-            <path d="M28 30 Q48 0 68 30" fill="#24120d" />
-            <circle cx="41" cy="42" r="2.5" fill="#1f2937" />
-            <circle cx="54" cy="42" r="2.5" fill="#1f2937" />
-            <path d="M41 52 Q48 58 55 52" stroke="#7c2d12" stroke-width="2.5" fill="none" stroke-linecap="round" />
-            <rect x="91" y="70" width="78" height="58" rx="12" fill="#ffffff" stroke="#60a5fa" stroke-width="4" />
-            <text x="130" y="106" font-size="26" text-anchor="middle" fill="#1d4ed8" font-weight="900">ፊደላተይ</text>
-          </g>
-          <g transform="translate(372 96)">
-            <circle cx="38" cy="36" r="27" fill="#71472e" />
-            <path d="M10 60 Q38 78 66 60 L71 130 L5 130 Z" fill="url(#dress2b)" />
-            <circle cx="38" cy="35" r="17" fill="#8d5b3d" />
-            <path d="M18 28 Q38 2 58 28" fill="#2c160e" />
-            <circle cx="32" cy="36" r="2.5" fill="#1f2937" />
-            <circle cx="45" cy="36" r="2.5" fill="#1f2937" />
-            <path d="M31 46 Q38 51 45 46" stroke="#7c2d12" stroke-width="2.5" fill="none" stroke-linecap="round" />
-          </g>
-        </svg>
-      </div>
     </section>
 
     <section class="main-grid">
       <div class="card panel">
-        <div class="prompt-wrap">
-          <div class="prompt-label">Current sound</div>
-          <div class="sound-icon">🔊</div>
-          <div class="message" id="message">Press Start to hear a random ግእዝ sound.</div>
-        </div>
-
-        <div class="action-row">
-          <button class="action-btn sound-btn" id="replayBtn" type="button">🔁 Hear Again - ከም ብሐድዲስ</button>
-        </div>
-
-        <div class="helper-note" id="helperNote">
-          Start with ግእዝ, the first of the 7 letter variants. The ግእዝ letters are already unlocked. When you master all the ግእዝ letters, ካዕብ will unlock, etc.
-        </div>
-      </div>
-
-      <div class="card panel">
         <div class="letters-top">
+          <button class="action-btn sound-btn" id="replayBtn" type="button" style="min-height:48px;padding:0 16px;font-size:0.95rem;">▶ Start / Hear Again</button>
           <h2>Choose the matching letter.</h2>
           <span class="pill" id="symbolCountPill">ዝሰማዕናዮ ፊደል ንጠውውቕ።</span>
         </div>
 
         <div class="variant-grid" id="variantGrid"></div>
         <div class="letter-grid" id="letterGrid"></div>
+        <details class="card" style="margin-top:16px;padding:14px 16px;background:rgba(255,255,255,0.7);">
+          <summary style="cursor:pointer;font-weight:900;color:#6d5200;">Confusing letters / ዝያዳ ምስምሳል ዘለዎም ፊደላት</summary>
+          <div class="mini-note" style="margin-top:10px;">A small extra set for easily confused letters.</div>
+          <div class="letter-grid" id="letterGrid2" style="margin-top:12px;"></div>
+        </details>
         <div class="mini-note" id="activeVariantNote">Active stage: ግእዝ</div>
       </div>
     </section>
@@ -727,13 +664,11 @@
       ['መ','ሙ','ሚ','ማ','ሜ','ም','ሞ'],
       ['ሠ','ሡ','ሢ','ሣ','ሤ','ሥ','ሦ'],
       ['ረ','ሩ','ሪ','ራ','ሬ','ር','ሮ'],
-      ['ሰ','ሱ','ሲ','ሳ','ሴ','ስ','ሶ'],
       ['ሸ','ሹ','ሺ','ሻ','ሼ','ሽ','ሾ'],
       ['ቀ','ቁ','ቂ','ቃ','ቄ','ቅ','ቆ'],
       ['በ','ቡ','ቢ','ባ','ቤ','ብ','ቦ'],
       ['ተ','ቱ','ቲ','ታ','ቴ','ት','ቶ'],
       ['ቸ','ቹ','ቺ','ቻ','ቼ','ች','ቾ'],
-      ['ኀ','ኁ','ኂ','ኃ','ኄ','ኅ','ኆ'],
       ['ነ','ኑ','ኒ','ና','ኔ','ን','ኖ'],
       ['ኘ','ኙ','ኚ','ኛ','ኜ','ኝ','ኞ'],
       ['አ','ኡ','ኢ','ኣ','ኤ','እ','ኦ'],
@@ -750,9 +685,14 @@
       ['ጨ','ጩ','ጪ','ጫ','ጬ','ጭ','ጮ'],
       ['ጰ','ጱ','ጲ','ጳ','ጴ','ጵ','ጶ'],
       ['ጸ','ጹ','ጺ','ጻ','ጼ','ጽ','ጾ'],
-      ['ፀ','ፁ','ፂ','ፃ','ፄ','ፅ','ፆ'],
       ['ፈ','ፉ','ፊ','ፋ','ፌ','ፍ','ፎ'],
       ['ፐ','ፑ','ፒ','ፓ','ፔ','ፕ','ፖ']
+    ];
+
+    const baseRows2 = [
+      ['ሰ','ሱ','ሲ','ሳ','ሴ','ስ','ሶ'],
+      ['ኀ','ኁ','ኂ','ኃ','ኄ','ኅ','ኆ'],
+      ['ፀ','ፁ','ፂ','ፃ','ፄ','ፅ','ፆ']
     ];
 
     const variantNames = ['ግእዝ', 'ካዕብ', 'ሣልስ', 'ራብዕ', 'ኀምስ', 'ሳድስ', 'ሳብዕ'];
@@ -778,6 +718,7 @@
     const helperNoteEl = document.getElementById('helperNote');
     const variantGrid = document.getElementById('variantGrid');
     const letterGrid = document.getElementById('letterGrid');
+    const letterGrid2 = document.getElementById('letterGrid2');
     const activeVariantNote = document.getElementById('activeVariantNote');
     const symbolCountPill = document.getElementById('symbolCountPill');
     const replayBtn = document.getElementById('replayBtn');
@@ -931,6 +872,20 @@
       symbolCountPill.textContent = activeSymbols.length + ' sounds';
     }
 
+    function buildConfusingLetterButtons() {
+      const confusingSymbols = baseRows2.flat().filter(symbol => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim());
+      letterGrid2.innerHTML = '';
+      confusingSymbols.forEach(symbol => {
+        const btn = document.createElement('button');
+        btn.className = 'letter-btn';
+        btn.type = 'button';
+        btn.textContent = symbol;
+        btn.setAttribute('aria-label', 'Choose confusing letter ' + symbol);
+        btn.addEventListener('click', () => handleGuess(symbol, btn));
+        letterGrid2.appendChild(btn);
+      });
+    }
+
     function updateStageNote() {
       const mastered = masterySets[currentVariantIndex].size;
       activeVariantNote.textContent = 'Active stage: ግእዝ. Mastered ' + mastered + ' of ' + activeSymbols.length + ' playable letters.';
@@ -1061,6 +1016,8 @@
         activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
         buildVariantButtons();
         buildLetterButtons();
+        buildConfusingLetterButtons();
+        updateStageNote();erButtons();
         updateStageNote();
         updateStats();
 
@@ -1122,6 +1079,7 @@
     activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
     buildVariantButtons();
     buildLetterButtons();
+    buildConfusingLetterButtons();
     updateStats();
     updateStageNote();
     loadSounds();
