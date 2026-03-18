@@ -8,19 +8,12 @@
     :root {
       --sky1: #8fdcff;
       --sky2: #d9f5ff;
-      --sun: #ffd85e;
       --grass1: #97df72;
       --grass2: #76c95d;
       --card: rgba(255,255,255,0.92);
       --text: #1f2937;
       --muted: #5b6678;
-      --blue: #1d9bf0;
-      --green: #25b96f;
-      --red: #ff6b6b;
-      --yellow: #ffcb3b;
       --gold: #f4b400;
-      --purple: #8b5cf6;
-      --pink: #ff97c7;
       --shadow: 0 18px 40px rgba(31, 41, 55, 0.16);
       --border: rgba(255,255,255,0.65);
     }
@@ -168,8 +161,7 @@
       padding: 8px;
     }
 
-    .intro-art svg,
-    .hero-art svg { width: 100%; height: 100%; display: block; }
+    .intro-art svg { width: 100%; height: 100%; display: block; }
 
     .top-grid {
       display: grid;
@@ -180,10 +172,6 @@
 
     .hero-copy,
     .panel { padding: 20px; }
-
-    .hero-art {
-      display: none;
-    }
 
     .stats {
       display: grid;
@@ -218,42 +206,6 @@
       gap: 18px;
     }
 
-    .prompt-wrap {
-      background: linear-gradient(180deg, #ffffff, #f8fbff);
-      border-radius: 28px;
-      padding: 24px;
-      text-align: center;
-      box-shadow: inset 0 0 0 1px rgba(148,163,184,0.12);
-    }
-
-    .prompt-label {
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      font-size: 0.82rem;
-      color: var(--muted);
-      font-weight: 900;
-    }
-
-    .sound-icon {
-      font-size: clamp(3rem, 8vw, 5.5rem);
-      margin: 10px 0;
-    }
-
-    .message {
-      min-height: 3.4em;
-      font-size: 1.05rem;
-      line-height: 1.55;
-      color: #475569;
-      font-weight: 800;
-    }
-
-    .action-row {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      margin-top: 18px;
-    }
-
     button {
       border: none;
       cursor: pointer;
@@ -285,6 +237,15 @@
       color: #6c5b18;
       font-size: 0.96rem;
       line-height: 1.55;
+      font-weight: 800;
+    }
+
+    .message {
+      margin-top: 12px;
+      min-height: 2.8em;
+      font-size: 1.02rem;
+      line-height: 1.5;
+      color: #475569;
       font-weight: 800;
     }
 
@@ -322,9 +283,10 @@
     }
 
     .variant-grid {
-      grid-template-columns: 1fr;
-      max-width: 120px;
+      grid-template-columns: repeat(2, minmax(100px, 1fr));
+      max-width: 240px;
       margin-bottom: 12px;
+      gap: 10px;
     }
 
     .letter-grid {
@@ -468,9 +430,7 @@
         transform: translateY(20px) scale(0.5) rotate(0deg);
         opacity: 0;
       }
-      15% {
-        opacity: 1;
-      }
+      15% { opacity: 1; }
       100% {
         transform: translateY(-180px) scale(1.2) rotate(18deg);
         opacity: 0;
@@ -487,15 +447,11 @@
         transform: translateY(-30px) rotate(0deg);
         opacity: 0;
       }
-      10% {
-        opacity: 1;
-      }
+      10% { opacity: 1; }
       100% {
         transform: translateY(320px) rotate(540deg);
         opacity: 0;
       }
-    }
-      100% { transform: scale(1); opacity: 1; }
     }
 
     @media (max-width: 1060px) {
@@ -504,18 +460,17 @@
       .intro-card {
         grid-template-columns: 1fr;
       }
-      .intro-art,
-      .hero-art { min-height: 240px; }
+      .intro-art { min-height: 240px; }
     }
 
     @media (max-width: 760px) {
       .container { padding: 16px; }
       .hero-copy,
-      .hero-art,
       .panel,
       .intro-card { padding: 18px; }
       .letter-grid { grid-template-columns: repeat(3, minmax(64px, 1fr)); }
       .stats { grid-template-columns: repeat(2, 1fr); }
+      .variant-grid { max-width: 100%; }
     }
   </style>
 </head>
@@ -566,8 +521,6 @@
             <circle cx="26" cy="38" r="2.5" fill="#1f2937" />
             <circle cx="38" cy="38" r="2.5" fill="#1f2937" />
             <path d="M26 47 Q32 52 38 47" stroke="#7c2d12" stroke-width="2.5" fill="none" stroke-linecap="round" />
-            <path d="M3 95 Q-10 85 -14 102" stroke="#8d5b3d" stroke-width="8" fill="none" stroke-linecap="round" />
-            <path d="M82 95 Q96 85 101 102" stroke="#8d5b3d" stroke-width="8" fill="none" stroke-linecap="round" />
           </g>
           <g transform="translate(220 70)">
             <circle cx="48" cy="44" r="30" fill="#6f452d" />
@@ -644,10 +597,15 @@
           <span class="pill" id="symbolCountPill">ዝሰማዕናዮ ፊደል ንጠውውቕ።</span>
         </div>
 
+        <div class="variant-grid" id="variantGrid"></div>
         <div class="letter-grid" id="letterGrid"></div>
-		<div class="letter-grid" id="letterGrid2" style="display:none;"></div>
-        
-		<div class="mini-note" id="activeVariantNote">Active stage: ግእዝ</div>
+        <div class="letter-grid" id="letterGrid2" style="display:none;"></div>
+
+        <div class="mini-note" id="activeVariantNote">Active stage: ግእዝ (1)</div>
+        <div class="helper-note" id="helperNote">
+          Tap Start / Hear Again to begin. ግእዝ (1) and ግእዝ (2) switch between the two letter groups.
+        </div>
+        <div class="message" id="message">The first sound will play after you tap Start on the welcome screen.</div>
       </div>
     </section>
   </div>
@@ -692,8 +650,6 @@
 
     let currentVariantIndex = 0;
     let unlockedVariantIndex = 0;
-    let activeSymbols = [];
-    let secondarySymbols = [];
     let currentTab = 1;
     let target = null;
     let score = 0;
@@ -712,7 +668,6 @@
     const variantGrid = document.getElementById('variantGrid');
     const letterGrid = document.getElementById('letterGrid');
     const letterGrid2 = document.getElementById('letterGrid2');
-    const secondPane = document.getElementById('secondPane');
     const activeVariantNote = document.getElementById('activeVariantNote');
     const symbolCountPill = document.getElementById('symbolCountPill');
     const replayBtn = document.getElementById('replayBtn');
@@ -841,14 +796,15 @@
       stopAudio();
       const soundValue = recordedAudio[symbol];
       if (!soundValue || typeof soundValue !== 'string' || !soundValue.trim()) {
-        messageEl.textContent = 'I could not find a sound for this letter in sounds.json.';
-        helperNoteEl.textContent = 'Check that sounds.json contains a real sound entry for ' + symbol + '.';
+        messageEl.textContent = 'No sound was found for this letter.';
+        helperNoteEl.textContent = 'The page is working, but this letter does not yet have an audio file.';
         return;
       }
+
       const audio = new Audio(soundValue);
       audio.play().catch(() => {
-        messageEl.textContent = 'Sound playback was blocked or the audio file path is not reachable.';
-        helperNoteEl.textContent = 'Check the audio path in sounds.json and make sure the .mp3 file exists on GitHub Pages.';
+        messageEl.textContent = 'Sound playback was blocked or the file path is not reachable.';
+        helperNoteEl.textContent = 'Check your browser audio permissions and your audio file paths.';
       });
     }
 
@@ -857,110 +813,92 @@
     }
 
     function buildVariantButtons() {
-	  variantGrid.innerHTML = `
-		<button class="variant-btn ${currentTab === 1 ? 'active' : ''}" id="firstPaneToggle" type="button">ግእዝ (1)</button>
-		<button class="variant-btn ${currentTab === 2 ? 'active' : ''}" id="secondPaneToggle" type="button">ግእዝ (2)</button>
-	  `;
+      variantGrid.innerHTML = `
+        <button class="variant-btn ${currentTab === 1 ? 'active' : ''}" id="firstPaneToggle" type="button">ግእዝ (1)</button>
+        <button class="variant-btn ${currentTab === 2 ? 'active' : ''}" id="secondPaneToggle" type="button">ግእዝ (2)</button>
+      `;
 
-	  document.getElementById('firstPaneToggle').addEventListener('click', () => {
-		currentTab = 1;
-		letterGrid.style.display = 'grid';
-		letterGrid2.style.display = 'none';
-		buildVariantButtons();
-		updateStageNote();
-	  });
+      document.getElementById('firstPaneToggle').addEventListener('click', () => {
+        currentTab = 1;
+        letterGrid.style.display = 'grid';
+        letterGrid2.style.display = 'none';
+        buildVariantButtons();
+        updateStageNote();
+      });
 
-	  document.getElementById('secondPaneToggle').addEventListener('click', () => {
-		currentTab = 2;
-		letterGrid.style.display = 'none';
-		letterGrid2.style.display = 'grid';
-		buildVariantButtons();
-		updateStageNote();
-	  });
+      document.getElementById('secondPaneToggle').addEventListener('click', () => {
+        currentTab = 2;
+        letterGrid.style.display = 'none';
+        letterGrid2.style.display = 'grid';
+        buildVariantButtons();
+        updateStageNote();
+      });
 
-	  letterGrid.style.display = currentTab === 1 ? 'grid' : 'none';
-	  letterGrid2.style.display = currentTab === 2 ? 'grid' : 'none';
-	}
+      letterGrid.style.display = currentTab === 1 ? 'grid' : 'none';
+      letterGrid2.style.display = currentTab === 2 ? 'grid' : 'none';
+    }
 
     function buildLetterButtons() {
       letterGrid.innerHTML = '';
-      const visiblePrimary = getVariantSymbols(currentVariantIndex);
-      visiblePrimary.forEach(symbol => {
+      getVariantSymbols(currentVariantIndex).forEach(symbol => {
         const btn = document.createElement('button');
         btn.className = 'letter-btn';
         btn.type = 'button';
         btn.textContent = symbol;
-        btn.setAttribute('aria-label', 'Choose letter ' + symbol);
         btn.addEventListener('click', () => handleGuess(symbol, btn));
         letterGrid.appendChild(btn);
       });
-      const totalVisible = visiblePrimary.length + getVariantSymbols2(currentVariantIndex).length;
-      symbolCountPill.textContent = totalVisible + ' letters';
+      symbolCountPill.textContent = (getVariantSymbols(currentVariantIndex).length + getVariantSymbols2(currentVariantIndex).length) + ' letters';
     }
 
-    function buildConfusingLetterButtons() {
-      if (!letterGrid2) return;
+    function buildSecondLetterButtons() {
       letterGrid2.innerHTML = '';
-      const visibleSecondary = getVariantSymbols2(currentVariantIndex);
-      visibleSecondary.forEach(symbol => {
+      getVariantSymbols2(currentVariantIndex).forEach(symbol => {
         const btn = document.createElement('button');
         btn.className = 'letter-btn';
         btn.type = 'button';
         btn.textContent = symbol;
-        btn.setAttribute('aria-label', 'Choose second group letter ' + symbol);
         btn.addEventListener('click', () => handleGuess(symbol, btn));
         letterGrid2.appendChild(btn);
       });
     }
 
     function updateStageNote() {
+      const total = getVariantSymbols(currentVariantIndex).length + getVariantSymbols2(currentVariantIndex).length;
       const mastered = masterySets[currentVariantIndex].size;
-      const totalVisible = getVariantSymbols(currentVariantIndex).length + getVariantSymbols2(currentVariantIndex).length;
-      activeVariantNote.textContent = 'Active stage: ' + (currentTab === 1 ? 'ግእዝ (1)' : 'ግእዝ (2)') + '. Mastered ' + mastered + ' of ' + totalVisible + ' letters.';
-    }
-
-    function selectVariant(index) {
-      currentVariantIndex = index;
-      activeSymbols = getPlayableSymbolsForVariant(index);
-      secondarySymbols = getPlayableSymbolsForVariant2(index);
-      target = null;
-      gameStarted = false;
-      buildVariantButtons();
-      buildLetterButtons();
-      buildConfusingLetterButtons();
-      updateStageNote();
-      messageEl.textContent = 'Tap Start / Hear Again to begin.';
-      helperNoteEl.textContent = 'Choose a tab, then press Start / Hear Again.';
+      activeVariantNote.textContent =
+        'Active stage: ' + (currentTab === 1 ? 'ግእዝ (1)' : 'ግእዝ (2)') + '. Mastered ' + mastered + ' of ' + total + ' letters.';
     }
 
     function pickRandomTarget() {
-      const activePool = currentTab === 1
+      const pool = currentTab === 1
         ? getPlayableSymbolsForVariant(currentVariantIndex)
         : getPlayableSymbolsForVariant2(currentVariantIndex);
 
-      if (!activePool.length) {
+      if (!pool.length) {
         target = null;
         gameStarted = false;
-        messageEl.textContent = 'This letter group has no playable sounds yet.';
-        helperNoteEl.textContent = 'Add one or more .mp3 audio files for this group to make it playable.';
+        messageEl.textContent = 'This tab has no playable sounds yet.';
+        helperNoteEl.textContent = 'Add audio files for this tab, then press Start / Hear Again.';
         return;
       }
 
       clearLetterStates();
       const mastered = masterySets[currentVariantIndex];
-      const remaining = activePool.filter(symbol => !mastered.has(symbol));
-      const candidates = remaining.length ? remaining : activePool;
+      const remaining = pool.filter(symbol => !mastered.has(symbol));
+      const candidates = remaining.length ? remaining : pool;
       target = candidates[Math.floor(Math.random() * candidates.length)];
       gameStarted = true;
       messageEl.textContent = 'Listen carefully and tap the matching letter.';
-      helperNoteEl.textContent = 'You can tap Start / Hear Again to replay the sound.';
+      helperNoteEl.textContent = 'Tap Start / Hear Again to replay the current sound.';
       setTimeout(() => playSound(target), 120);
     }
 
     function unlockNextVariantIfReady() {
+      const total = getVariantSymbols(currentVariantIndex).length + getVariantSymbols2(currentVariantIndex).length;
       const masteredCount = masterySets[currentVariantIndex].size;
-      const totalVisible = getVariantSymbols(currentVariantIndex).length + getVariantSymbols2(currentVariantIndex).length;
-      if (masteredCount < totalVisible) {
+
+      if (masteredCount < total) {
         updateStageNote();
         return false;
       }
@@ -979,7 +917,7 @@
         );
       } else if (currentVariantIndex < 6) {
         messageEl.textContent = 'Fantastic work! You mastered ' + variantNames[currentVariantIndex] + '.';
-        helperNoteEl.textContent = 'To unlock ' + variantNames[currentVariantIndex + 1] + ', add at least one .mp3 sound file for that stage.';
+        helperNoteEl.textContent = 'To unlock ' + variantNames[currentVariantIndex + 1] + ', add at least one sound file for that stage.';
       } else {
         messageEl.textContent = 'You finished all seven stages. Great job!';
         helperNoteEl.textContent = 'The child has now mastered the full learning path.';
@@ -1011,7 +949,7 @@
 
       if (!activePool.includes(symbol)) {
         messageEl.textContent = 'This letter does not have a recorded sound yet.';
-        helperNoteEl.textContent = 'Use letters with audio in the open group, or add the missing .mp3 file.';
+        helperNoteEl.textContent = 'Use letters with audio in the open tab, or add the missing sound file.';
         return;
       }
 
@@ -1053,61 +991,40 @@
 
         recordedAudio = Object.fromEntries(usableEntries);
         refreshVariantAvailability();
-        activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
-        secondarySymbols = getPlayableSymbolsForVariant2(currentVariantIndex);
-        buildVariantButtons();
-        buildLetterButtons();
-        buildConfusingLetterButtons();
-        updateStageNote();
         updateStats();
+        updateStageNote();
 
         if (!usableEntries.length) {
           messageEl.textContent = 'sounds.json loaded, but it does not contain any usable sound paths yet.';
           helperNoteEl.textContent = 'Add entries like "ሀ": "audio/ሀ.mp3".';
-          return;
+          return false;
         }
 
-        const readyStages = variantPlayableCounts.filter(count => count > 0).length;
-        helperNoteEl.textContent = 'Sounds loaded! Found ' + usableEntries.length + ' playable sound entries and ' + readyStages + ' playable stage(s). Tap Start / Hear Again to begin.';
+        helperNoteEl.textContent = 'Sounds loaded! The first sound will play now.';
+        return true;
       } catch (error) {
         recordedAudio = {};
         refreshVariantAvailability();
-        activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
-        secondarySymbols = getPlayableSymbolsForVariant2(currentVariantIndex);
-        buildVariantButtons();
-        buildLetterButtons();
-        buildConfusingLetterButtons();
-        updateStageNote();
         messageEl.textContent = 'The page could not load sounds.json.';
-        helperNoteEl.textContent = 'On GitHub Pages, keep sounds.json beside this HTML file and make sure the JSON contains real .mp3 audio paths.';
+        helperNoteEl.textContent = 'Keep sounds.json beside this HTML file and make sure it contains valid audio paths.';
+        return false;
       }
     }
 
-    enterGameBtn.addEventListener('click', () => {
+    enterGameBtn.addEventListener('click', async () => {
       introOverlay.style.display = 'none';
-      pickRandomTarget();
+      const ok = await loadSounds();
+      if (ok) pickRandomTarget();
     });
 
     celebrationContinueBtn.addEventListener('click', () => {
-      const finishedAll = currentVariantIndex === 6 && masterySets[currentVariantIndex].size === (getVariantSymbols(currentVariantIndex).length + getVariantSymbols2(currentVariantIndex).length);
       hideCelebration();
-      if (finishedAll) {
-        score = 0;
-        rounds = 0;
-        currentVariantIndex = 0;
-        masterySets.forEach(set => set.clear());
-        currentTab = 1;
-        selectVariant(0);
-        updateStats();
-        helperNoteEl.textContent = 'You can replay the whole adventure from the beginning.';
-        pickRandomTarget();
-      }
     });
 
     celebrationNextBtn.addEventListener('click', () => {
       hideCelebration();
       messageEl.textContent = '🎉 Fantastic! A new level has unlocked.';
-      helperNoteEl.textContent = 'More stages can be shown later. For now, the screen stays focused on ግእዝ to keep things simple.';
+      helperNoteEl.textContent = 'More stages can be shown later. For now, the screen stays focused on ግእዝ.';
     });
 
     replayBtn.addEventListener('click', () => {
@@ -1116,8 +1033,8 @@
         : getPlayableSymbolsForVariant2(currentVariantIndex);
 
       if (!activePool.length) {
-        messageEl.textContent = 'This letter group has no playable sounds yet.';
-        helperNoteEl.textContent = 'Check sounds.json and your audio files for this group.';
+        messageEl.textContent = 'This tab has no playable sounds yet.';
+        helperNoteEl.textContent = 'Check your audio files for the open tab.';
         return;
       }
 
@@ -1129,15 +1046,11 @@
       playSound(target);
     });
 
-    refreshVariantAvailability();
-    activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
-    secondarySymbols = getPlayableSymbolsForVariant2(currentVariantIndex);
     buildVariantButtons();
     buildLetterButtons();
-    buildConfusingLetterButtons();
+    buildSecondLetterButtons();
     updateStats();
     updateStageNote();
-    loadSounds();
   </script>
 </body>
 </html>
