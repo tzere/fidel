@@ -8,19 +8,12 @@
     :root {
       --sky1: #8fdcff;
       --sky2: #d9f5ff;
-      --sun: #ffd85e;
       --grass1: #97df72;
       --grass2: #76c95d;
       --card: rgba(255,255,255,0.92);
       --text: #1f2937;
       --muted: #5b6678;
-      --blue: #1d9bf0;
-      --green: #25b96f;
-      --red: #ff6b6b;
-      --yellow: #ffcb3b;
       --gold: #f4b400;
-      --purple: #8b5cf6;
-      --pink: #ff97c7;
       --shadow: 0 18px 40px rgba(31, 41, 55, 0.16);
       --border: rgba(255,255,255,0.65);
     }
@@ -91,7 +84,7 @@
       background: var(--card);
       backdrop-filter: blur(10px);
       border: 1px solid var(--border);
-      border-radius: 34px;
+      border-radius: 28px;
       box-shadow: var(--shadow);
     }
 
@@ -157,9 +150,6 @@
       box-shadow: 0 14px 28px rgba(31, 125, 243, 0.28);
     }
 
-    .start-big:hover { transform: translateY(-2px); }
-    .start-big:active { transform: scale(0.98); }
-
     .intro-art {
       min-height: 320px;
       border-radius: 28px;
@@ -168,8 +158,7 @@
       padding: 8px;
     }
 
-    .intro-art svg,
-    .hero-art svg { width: 100%; height: 100%; display: block; }
+    .intro-art svg { width: 100%; height: 100%; display: block; }
 
     .top-grid {
       display: grid;
@@ -180,10 +169,6 @@
 
     .hero-copy,
     .panel { padding: 20px; }
-
-    .hero-art {
-      display: none;
-    }
 
     .stats {
       display: grid;
@@ -216,42 +201,6 @@
       display: grid;
       grid-template-columns: 1fr;
       gap: 18px;
-    }
-
-    .prompt-wrap {
-      background: linear-gradient(180deg, #ffffff, #f8fbff);
-      border-radius: 28px;
-      padding: 24px;
-      text-align: center;
-      box-shadow: inset 0 0 0 1px rgba(148,163,184,0.12);
-    }
-
-    .prompt-label {
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      font-size: 0.82rem;
-      color: var(--muted);
-      font-weight: 900;
-    }
-
-    .sound-icon {
-      font-size: clamp(3rem, 8vw, 5.5rem);
-      margin: 10px 0;
-    }
-
-    .message {
-      min-height: 3.4em;
-      font-size: 1.05rem;
-      line-height: 1.55;
-      color: #475569;
-      font-weight: 800;
-    }
-
-    .action-row {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      margin-top: 18px;
     }
 
     button {
@@ -299,7 +248,7 @@
 
     .letters-top h2 {
       margin: 0;
-      font-size: 1.8rem;
+      font-size: 1.5rem;
     }
 
     .pill {
@@ -322,9 +271,10 @@
     }
 
     .variant-grid {
-      grid-template-columns: 1fr;
-      max-width: 120px;
+      grid-template-columns: repeat(2, minmax(100px, 1fr));
+      max-width: 240px;
       margin-bottom: 12px;
+      gap: 10px;
     }
 
     .letter-grid {
@@ -495,8 +445,6 @@
         opacity: 0;
       }
     }
-      100% { transform: scale(1); opacity: 1; }
-    }
 
     @media (max-width: 1060px) {
       .top-grid,
@@ -504,18 +452,17 @@
       .intro-card {
         grid-template-columns: 1fr;
       }
-      .intro-art,
-      .hero-art { min-height: 240px; }
+      .intro-art { min-height: 240px; }
     }
 
     @media (max-width: 760px) {
       .container { padding: 16px; }
       .hero-copy,
-      .hero-art,
       .panel,
       .intro-card { padding: 18px; }
       .letter-grid { grid-template-columns: repeat(3, minmax(64px, 1fr)); }
       .stats { grid-template-columns: repeat(2, 1fr); }
+      .variant-grid { max-width: 100%; }
     }
   </style>
 </head>
@@ -595,7 +542,7 @@
   </div>
 
   <div class="celebration-overlay" id="celebrationOverlay">
-    <div class="card celebration-card" style="animation: popIn 0.22s ease-out;">
+    <div class="card celebration-card">
       <div class="stars-layer" id="starsLayer"></div>
       <div class="badge" id="celebrationBadge">⭐ Great Job!</div>
       <h2 id="celebrationTitle">You unlocked a new stage!</h2>
@@ -646,12 +593,13 @@
 
         <div class="variant-grid" id="variantGrid"></div>
         <div class="letter-grid" id="letterGrid"></div>
-        <details class="card" id="secondPane" style="margin-top:16px;padding:14px 16px;background:rgba(255,255,255,0.7);">
-          <summary style="cursor:pointer;font-weight:900;color:#6d5200;">Second letter group / ካልኣይ ጉጅለ ፊደላት</summary>
-          <div class="mini-note" style="margin-top:10px;">A second practice group for the remaining letters.</div>
-          <div class="letter-grid" id="letterGrid2" style="margin-top:12px;"></div>
-        </details>
+        <div class="letter-grid" id="letterGrid2" style="display:none;"></div>
+
         <div class="mini-note" id="activeVariantNote">Active stage: ግእዝ</div>
+        <div class="helper-note" id="helperNote" style="margin-top:16px;">
+          Start with ግእዝ, the first of the 7 letter variants. The ግእዝ letters are already unlocked. When you master all the ግእዝ letters, ካዕብ will unlock, etc.
+        </div>
+        <div class="message" id="message" style="margin-top:16px;">Tap Start / Hear Again to begin.</div>
       </div>
     </section>
   </div>
@@ -701,8 +649,6 @@
 
     let currentVariantIndex = 0;
     let unlockedVariantIndex = 0;
-    let activeSymbols = [];
-    let secondarySymbols = [];
     let currentTab = 1;
     let target = null;
     let score = 0;
@@ -721,7 +667,6 @@
     const variantGrid = document.getElementById('variantGrid');
     const letterGrid = document.getElementById('letterGrid');
     const letterGrid2 = document.getElementById('letterGrid2');
-    const secondPane = document.getElementById('secondPane');
     const activeVariantNote = document.getElementById('activeVariantNote');
     const symbolCountPill = document.getElementById('symbolCountPill');
     const replayBtn = document.getElementById('replayBtn');
@@ -738,7 +683,7 @@
       roundsEl.textContent = rounds;
       const accuracy = rounds === 0 ? 0 : Math.round((score / rounds) * 100);
       accuracyEl.textContent = accuracy + '%';
-      unlockedCountEl.textContent = (unlockedVariantIndex + 1) + '/7';
+      unlockedCountEl.textContent = (unlockedCountEl.textContent = (unlockedVariantIndex + 1) + '/7');
     }
 
     function getVariantSymbols(index) {
@@ -761,7 +706,6 @@
       for (let i = 0; i < 7; i += 1) {
         variantPlayableCounts[i] = getPlayableSymbolsForVariant(i).length;
       }
-
       let highestUnlocked = 0;
       while (highestUnlocked < 6 && variantPlayableCounts[highestUnlocked + 1] > 0) {
         highestUnlocked += 1;
@@ -866,101 +810,70 @@
     }
 
     function buildVariantButtons() {
-      variantGrid.style.display = 'grid';
-      variantGrid.style.gridTemplateColumns = 'repeat(2, minmax(100px, 1fr))';
-      variantGrid.style.maxWidth = '240px';
-      variantGrid.style.gap = '10px';
       variantGrid.innerHTML = `
-        <button class="variant-btn ${currentTab === 1 ? 'active' : ''}" id="firstPaneToggle" type="button" aria-label="First group">ግእዝ (1)</button>
-        <button class="variant-btn ${currentTab === 2 ? 'active' : ''}" id="secondPaneToggle" type="button" aria-label="Second group">ግእዝ (2)</button>
+        <button class="variant-btn ${currentTab === 1 ? 'active' : ''}" id="firstPaneToggle" type="button">ግእዝ (1)</button>
+        <button class="variant-btn ${currentTab === 2 ? 'active' : ''}" id="secondPaneToggle" type="button">ግእዝ (2)</button>
       `;
 
-      const firstPaneToggle = document.getElementById('firstPaneToggle');
-      const secondPaneToggle = document.getElementById('secondPaneToggle');
+      document.getElementById('firstPaneToggle').addEventListener('click', () => {
+        currentTab = 1;
+        letterGrid.style.display = 'grid';
+        letterGrid2.style.display = 'none';
+        buildVariantButtons();
+        updateStageNote();
+      });
 
-      if (firstPaneToggle) {
-        firstPaneToggle.addEventListener('click', () => {
-          currentTab = 1;
-          letterGrid.style.display = 'grid';
-          if (secondPane) secondPane.style.display = 'none';
-          buildVariantButtons();
-          updateStageNote();
-        });
-      }
+      document.getElementById('secondPaneToggle').addEventListener('click', () => {
+        currentTab = 2;
+        letterGrid.style.display = 'none';
+        letterGrid2.style.display = 'grid';
+        buildVariantButtons();
+        updateStageNote();
+      });
 
-      if (secondPaneToggle) {
-        secondPaneToggle.addEventListener('click', () => {
-          currentTab = 2;
-          letterGrid.style.display = 'none';
-          if (secondPane) secondPane.style.display = 'block';
-          buildVariantButtons();
-          updateStageNote();
-        });
-      }
-
-      if (secondPane) {
-        secondPane.style.display = currentTab === 2 ? 'block' : 'none';
-        letterGrid.style.display = currentTab === 2 ? 'none' : 'grid';
-      }
+      letterGrid.style.display = currentTab === 1 ? 'grid' : 'none';
+      letterGrid2.style.display = currentTab === 2 ? 'grid' : 'none';
     }
 
     function buildLetterButtons() {
       letterGrid.innerHTML = '';
-      const visiblePrimary = getVariantSymbols(currentVariantIndex);
-      visiblePrimary.forEach(symbol => {
+      getVariantSymbols(currentVariantIndex).forEach(symbol => {
         const btn = document.createElement('button');
         btn.className = 'letter-btn';
         btn.type = 'button';
         btn.textContent = symbol;
-        btn.setAttribute('aria-label', 'Choose letter ' + symbol);
         btn.addEventListener('click', () => handleGuess(symbol, btn));
         letterGrid.appendChild(btn);
       });
-      const totalVisible = visiblePrimary.length + getVariantSymbols2(currentVariantIndex).length;
-      symbolCountPill.textContent = totalVisible + ' letters';
+      symbolCountPill.textContent =
+        (getVariantSymbols(currentVariantIndex).length + getVariantSymbols2(currentVariantIndex).length) + ' letters';
     }
 
-    function buildConfusingLetterButtons() {
-      if (!letterGrid2) return;
+    function buildSecondLetterButtons() {
       letterGrid2.innerHTML = '';
-      const visibleSecondary = getVariantSymbols2(currentVariantIndex);
-      visibleSecondary.forEach(symbol => {
+      getVariantSymbols2(currentVariantIndex).forEach(symbol => {
         const btn = document.createElement('button');
         btn.className = 'letter-btn';
         btn.type = 'button';
         btn.textContent = symbol;
-        btn.setAttribute('aria-label', 'Choose second group letter ' + symbol);
         btn.addEventListener('click', () => handleGuess(symbol, btn));
         letterGrid2.appendChild(btn);
       });
     }
 
     function updateStageNote() {
+      const total = getVariantSymbols(currentVariantIndex).length + getVariantSymbols2(currentVariantIndex).length;
       const mastered = masterySets[currentVariantIndex].size;
-      const totalVisible = getVariantSymbols(currentVariantIndex).length + getVariantSymbols2(currentVariantIndex).length;
-      activeVariantNote.textContent = 'Active stage: ' + (currentTab === 1 ? 'ግእዝ (1)' : 'ግእዝ (2)') + '. Mastered ' + mastered + ' of ' + totalVisible + ' letters.';
-    }
-
-    function selectVariant(index) {
-      currentVariantIndex = index;
-      activeSymbols = getPlayableSymbolsForVariant(index);
-      secondarySymbols = getPlayableSymbolsForVariant2(index);
-      target = null;
-      gameStarted = false;
-      buildVariantButtons();
-      buildLetterButtons();
-      buildConfusingLetterButtons();
-      updateStageNote();
-      messageEl.textContent = 'Tap Start / Hear Again to begin.';
-      helperNoteEl.textContent = 'Choose a tab, then press Start / Hear Again.';
+      activeVariantNote.textContent =
+        'Active stage: ' + (currentTab === 1 ? 'ግእዝ (1)' : 'ግእዝ (2)') + '. Mastered ' + mastered + ' of ' + total + ' letters.';
     }
 
     function pickRandomTarget() {
-      activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
-      secondarySymbols = getPlayableSymbolsForVariant2(currentVariantIndex);
-      const activePool = currentTab === 2 ? secondarySymbols : activeSymbols;
+      const pool = currentTab === 1
+        ? getPlayableSymbolsForVariant(currentVariantIndex)
+        : getPlayableSymbolsForVariant2(currentVariantIndex);
 
-      if (!activePool.length) {
+      if (!pool.length) {
         target = null;
         messageEl.textContent = 'This letter group has no playable sounds yet.';
         helperNoteEl.textContent = 'Add one or more .mp3 audio files for this group to make it playable.';
@@ -969,9 +882,9 @@
 
       clearLetterStates();
       const mastered = masterySets[currentVariantIndex];
-      const remaining = activePool.filter(symbol => !mastered.has(symbol));
-      const pool = remaining.length ? remaining : activePool;
-      target = pool[Math.floor(Math.random() * pool.length)];
+      const remaining = pool.filter(symbol => !mastered.has(symbol));
+      const candidates = remaining.length ? remaining : pool;
+      target = candidates[Math.floor(Math.random() * candidates.length)];
       gameStarted = true;
       messageEl.textContent = 'Listen carefully and tap the matching letter.';
       helperNoteEl.textContent = 'You can tap Start / Hear Again to replay the sound.';
@@ -979,9 +892,9 @@
     }
 
     function unlockNextVariantIfReady() {
+      const total = getVariantSymbols(currentVariantIndex).length + getVariantSymbols2(currentVariantIndex).length;
       const masteredCount = masterySets[currentVariantIndex].size;
-      const totalVisible = getVariantSymbols(currentVariantIndex).length + getVariantSymbols2(currentVariantIndex).length;
-      if (masteredCount < totalVisible) {
+      if (masteredCount < total) {
         updateStageNote();
         return false;
       }
@@ -1026,7 +939,10 @@
         return;
       }
 
-      const activePool = currentTab === 2 ? secondarySymbols : activeSymbols;
+      const activePool = currentTab === 1
+        ? getPlayableSymbolsForVariant(currentVariantIndex)
+        : getPlayableSymbolsForVariant2(currentVariantIndex);
+
       if (!activePool.includes(symbol)) {
         messageEl.textContent = 'Choose a letter from the open group.';
         helperNoteEl.textContent = 'The sound comes from the currently open group only.';
@@ -1044,10 +960,7 @@
         updateStats();
         updateStageNote();
         const stageCompleted = unlockNextVariantIfReady();
-
-        if (stageCompleted && masterySets[currentVariantIndex].size === (getVariantSymbols(currentVariantIndex).length + getVariantSymbols2(currentVariantIndex).length)) {
-          return;
-        }
+        if (stageCompleted) return;
 
         setTimeout(() => {
           messageEl.textContent = 'Wonderful! Here comes the next sound.';
@@ -1067,62 +980,40 @@
         const response = await fetch('sounds.json', { cache: 'no-store' });
         if (!response.ok) throw new Error('Could not load sounds.json');
         const data = await response.json();
-        if (!data || typeof data !== 'object') throw new Error('Invalid sounds.json format');
-
         const resolvedMap = data.symbols && typeof data.symbols === 'object' ? data.symbols : data;
         const usableEntries = Object.entries(resolvedMap).filter(([_, value]) => typeof value === 'string' && value.trim());
-
         recordedAudio = Object.fromEntries(usableEntries);
+
         refreshVariantAvailability();
-        activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
-        secondarySymbols = getPlayableSymbolsForVariant2(currentVariantIndex);
         buildVariantButtons();
         buildLetterButtons();
-        buildConfusingLetterButtons();
-        updateStageNote();
+        buildSecondLetterButtons();
         updateStats();
+        updateStageNote();
 
         if (!usableEntries.length) {
           messageEl.textContent = 'sounds.json loaded, but it does not contain any usable sound paths yet.';
           helperNoteEl.textContent = 'Add entries like "ሀ": "audio/ሀ.mp3".';
-          return;
+          return false;
         }
 
-        const readyStages = variantPlayableCounts.filter(count => count > 0).length;
-        helperNoteEl.textContent = 'Sounds loaded! Found ' + usableEntries.length + ' playable sound entries and ' + readyStages + ' playable stage(s). Tap Start / Hear Again to begin.';
+        helperNoteEl.textContent = 'Sounds loaded! Tap Start / Hear Again to begin.';
+        return true;
       } catch (error) {
-        recordedAudio = {};
-        refreshVariantAvailability();
-        activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
-        secondarySymbols = getPlayableSymbolsForVariant2(currentVariantIndex);
-        buildVariantButtons();
-        buildLetterButtons();
-        buildConfusingLetterButtons();
-        updateStageNote();
         messageEl.textContent = 'The page could not load sounds.json.';
         helperNoteEl.textContent = 'On GitHub Pages, keep sounds.json beside this HTML file and make sure the JSON contains real .mp3 audio paths.';
+        return false;
       }
     }
 
-    enterGameBtn.addEventListener('click', () => {
+    enterGameBtn.addEventListener('click', async () => {
       introOverlay.style.display = 'none';
-      pickRandomTarget();
+      const ok = await loadSounds();
+      if (ok) pickRandomTarget();
     });
 
     celebrationContinueBtn.addEventListener('click', () => {
-      const finishedAll = currentVariantIndex === 6 && masterySets[currentVariantIndex].size === (getVariantSymbols(currentVariantIndex).length + getVariantSymbols2(currentVariantIndex).length);
       hideCelebration();
-      if (finishedAll) {
-        score = 0;
-        rounds = 0;
-        currentVariantIndex = 0;
-        masterySets.forEach(set => set.clear());
-        currentTab = 1;
-        selectVariant(0);
-        updateStats();
-        helperNoteEl.textContent = 'You can replay the whole adventure from the beginning.';
-        pickRandomTarget();
-      }
     });
 
     celebrationNextBtn.addEventListener('click', () => {
@@ -1132,28 +1023,29 @@
     });
 
     replayBtn.addEventListener('click', () => {
-      const activePool = currentTab === 2 ? getPlayableSymbolsForVariant2(currentVariantIndex) : getPlayableSymbolsForVariant(currentVariantIndex);
+      const activePool = currentTab === 1
+        ? getPlayableSymbolsForVariant(currentVariantIndex)
+        : getPlayableSymbolsForVariant2(currentVariantIndex);
+
       if (!activePool.length) {
         messageEl.textContent = 'This letter group has no playable sounds yet.';
         helperNoteEl.textContent = 'Check sounds.json and your audio files for this group.';
         return;
       }
+
       if (!target || !gameStarted || !activePool.includes(target)) {
         pickRandomTarget();
         return;
       }
+
       playSound(target);
     });
 
-    refreshVariantAvailability();
-    activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
-    secondarySymbols = getPlayableSymbolsForVariant2(currentVariantIndex);
     buildVariantButtons();
     buildLetterButtons();
-    buildConfusingLetterButtons();
+    buildSecondLetterButtons();
     updateStats();
     updateStageNote();
-    loadSounds();
   </script>
 </body>
 </html>
