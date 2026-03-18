@@ -521,10 +521,10 @@
   <div class="intro-overlay" id="introOverlay">
     <div class="card intro-card">
       <div class="intro-text">
-        <div class="badge">🌟 Habesha Learning Time</div>
-        <h1>Geez Sound Adventure</h1>
+        <div class="badge">🌟 Welcome . መርሐባ!</div>
+        <h1>ምልከት ፊደላት</h1>
         <p>
-          Welcome! Listen to a letter sound, tap the matching Geez letter, and unlock the next learning stage when you master the whole set.
+          Welcome! This app will help you to master the Geez Fidelat. Listen to a letter sound, tap the matching Geez letter, and unlock the next learning stage when you master this set.
         </p>
         <button class="start-big" id="enterGameBtn" type="button">🎉 Start / ንስማዕ</button>
       </div>
@@ -568,7 +568,7 @@
             <circle cx="54" cy="42" r="2.5" fill="#1f2937" />
             <path d="M41 52 Q48 58 55 52" stroke="#7c2d12" stroke-width="2.5" fill="none" stroke-linecap="round" />
             <rect x="91" y="70" width="78" height="58" rx="12" fill="#ffffff" stroke="#60a5fa" stroke-width="4" />
-            <text x="130" y="106" font-size="26" text-anchor="middle" fill="#1d4ed8" font-weight="900">ሀ ሁ ሂ</text>
+            <text x="130" y="106" font-size="26" text-anchor="middle" fill="#1d4ed8" font-weight="900">ሀ ሁ</text>
           </g>
           <g transform="translate(372 96)">
             <circle cx="38" cy="36" r="27" fill="#71472e" />
@@ -601,7 +601,7 @@
     <section class="top-grid">
       <div class="card hero-copy">
         <div class="badge">🌈 Listen • Match • Unlock</div>
-        <h1>ምልከት ፊደላት</h1>
+        <h1>ምልከት ፊደላት - mastering Geez fidelat</h1>
         <p class="subtitle">
           Start with the main letters (ግእዝ). After mastering ግእዝ, the second variant (ካዕብ) will be activated. And then the third (ሣልስ), etc.
         </p>
@@ -686,13 +686,7 @@
           <div class="message" id="message">Press Start to hear a random ግእዝ sound.</div>
         </div>
 
-        <div class="action-row">
-          <button class="action-btn start-btn" id="startBtn" type="button">▶ Start / ንስማዕ</button>
-          <button class="action-btn sound-btn" id="replayBtn" type="button">🔁 Hear Again - ከም ብሐድዲስ</button>
-        </div>
-
-        <div class="helper-note" id="helperNote">
-          Start with ግእዝ. The first ግእዝ letters are ready. When the child gets all ግእዝ letters right at least once, ካዕብ unlocks.
+         Start with ግእዝ, the first of the 7 letter variants. The ግእዝ letters are already unlocked. When you master all the ግእዝ letters, ካዕብ will unlock, etc.
         </div>
       </div>
 
@@ -702,15 +696,10 @@
           <span class="pill" id="symbolCountPill">ዝሰማዕናዮ ፊደል ንጠውውቕ።</span>
         </div>
 
-        <div class="variant-grid" id="variantGrid"></div>
+        <div class="variant-grid" id="variantGrid" style="grid-template-columns: 1fr; max-width: 220px;"></div>
         <div class="letter-grid" id="letterGrid"></div>
         <div class="mini-note" id="activeVariantNote">Active stage: ግእዝ</div>
-      </div>
-    </section>
-  </div>
-
-  <script>
-    const baseRows = [
+      </dibaseRows = [
       ['ሀ','ሁ','ሂ','ሃ','ሄ','ህ','ሆ'],
       ['ለ','ሉ','ሊ','ላ','ሌ','ል','ሎ'],
       ['ሐ','ሑ','ሒ','ሓ','ሔ','ሕ','ሖ'],
@@ -723,6 +712,7 @@
       ['በ','ቡ','ቢ','ባ','ቤ','ብ','ቦ'],
       ['ተ','ቱ','ቲ','ታ','ቴ','ት','ቶ'],
       ['ቸ','ቹ','ቺ','ቻ','ቼ','ች','ቾ'],
+	  ['ኀ','ኁ','ኂ','ኃ','ኄ','ኅ','ኆ'],
       ['ነ','ኑ','ኒ','ና','ኔ','ን','ኖ'],
       ['ኘ','ኙ','ኚ','ኛ','ኜ','ኝ','ኞ'],
       ['አ','ኡ','ኢ','ኣ','ኤ','እ','ኦ'],
@@ -739,6 +729,7 @@
       ['ጨ','ጩ','ጪ','ጫ','ጬ','ጭ','ጮ'],
       ['ጰ','ጱ','ጲ','ጳ','ጴ','ጵ','ጶ'],
       ['ጸ','ጹ','ጺ','ጻ','ጼ','ጽ','ጾ'],
+	  ['ፀ','ፁ','ፂ','ፃ','ፄ','ፅ','ፆ'],
       ['ፈ','ፉ','ፊ','ፋ','ፌ','ፍ','ፎ'],
       ['ፐ','ፑ','ፒ','ፓ','ፔ','ፕ','ፖ']
     ];
@@ -768,15 +759,12 @@
     const letterGrid = document.getElementById('letterGrid');
     const activeVariantNote = document.getElementById('activeVariantNote');
     const symbolCountPill = document.getElementById('symbolCountPill');
-    const startBtn = document.getElementById('startBtn');
     const replayBtn = document.getElementById('replayBtn');
     const celebrationOverlay = document.getElementById('celebrationOverlay');
     const celebrationBadge = document.getElementById('celebrationBadge');
     const celebrationTitle = document.getElementById('celebrationTitle');
     const celebrationText = document.getElementById('celebrationText');
-    const celebrationContinueBtn = document.getElementById('celebrationContinueBtn');
-    const celebrationNextBtn = document.getElementById('celebrationNextBtn');
-    const starsLayer = document.getElementById('starsLayer');
+    const celebrationContinueBtn = document.getElem    const starsLayer = document.getElementById('starsLayer');
 
     function updateStats() {
       scoreEl.textContent = score;
@@ -891,23 +879,7 @@
     }
 
     function buildVariantButtons() {
-      variantGrid.innerHTML = '';
-      variantNames.forEach((label, index) => {
-        const btn = document.createElement('button');
-        const isBeyondUnlock = index > unlockedVariantIndex;
-        const playableCount = variantPlayableCounts[index];
-        const isIncomplete = playableCount === 0;
-        const isLocked = isBeyondUnlock || isIncomplete;
-        btn.className = 'variant-btn' + (index === currentVariantIndex ? ' active' : '') + (isLocked ? ' locked' : '');
-        btn.type = 'button';
-        btn.textContent = label + (isIncomplete ? ' 🔒' : ' (' + playableCount + ')');
-        btn.disabled = isLocked;
-        btn.setAttribute('aria-label', 'Choose stage ' + label);
-        btn.addEventListener('click', () => {
-          if (!isLocked) selectVariant(index);
-        });
-        variantGrid.appendChild(btn);
-      });
+      variantGrid.innerHTML = '<button class="variant-btn active" type="button" aria-label="Current stage">ግእዝ</button>';
     }
 
     function buildLetterButtons() {
@@ -918,28 +890,8 @@
         btn.type = 'button';
         btn.textContent = symbol;
         btn.setAttribute('aria-label', 'Choose letter ' + symbol);
-        btn.addEventListener('click', () => handleGuess(symbol, btn));
-        letterGrid.appendChild(btn);
-      });
-      symbolCountPill.textContent = activeSymbols.length + ' sounds';
-    }
-
-    function updateStageNote() {
-      const mastered = masterySets[currentVariantIndex].size;
-      const playableCount = activeSymbols.filter(symbol => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim()).length;
-      activeVariantNote.textContent = 'Active stage: ' + variantNames[currentVariantIndex] + '. Mastered ' + mastered + ' of ' + playableCount + ' playable letters in this stage.';
-    }
-
-    function selectVariant(index) {
-      currentVariantIndex = index;
-      activeSymbols = getPlayableSymbolsForVariant(index);
-      target = null;
-      gameStarted = false;
-      buildVariantButtons();
-      buildLetterButtons();
-      updateStageNote();
-      messageEl.textContent = 'Press Start to hear a random sound from ' + variantNames[index] + '.';
-      helperNoteEl.textContent = 'Only letters with real .mp3 audio are used in the game, so you can test with the files you already have.';
+        btn.addEventListesten carefully and tap the matching letter.';
+      helperNoteEl.textContent = 'Tap a letter after the sound plays.';
     }
 
     function chooseRandomUnmasteredOrAny() {
@@ -965,29 +917,11 @@
     }
 
     function unlockNextVariantIfReady() {
-      const masteredCount = masterySets[currentVariantIndex].size;
-      if (masteredCount < activeSymbols.length) {
-        updateStageNote();
-        return false;
-      }
-
-      if (
-        currentVariantIndex < 6 &&
-        unlockedVariantIndex === currentVariantIndex &&
-        variantPlayableCounts[currentVariantIndex + 1] > 0
-      ) {
-        unlockedVariantIndex += 1;
-        buildVariantButtons();
-        helperNoteEl.textContent = 'Amazing! ' + variantNames[currentVariantIndex + 1] + ' is now unlocked because it now has playable sounds.';
+      const masteredCe it now has playable sounds.';
         messageEl.textContent = 'Fantastic work! You mastered ' + variantNames[currentVariantIndex] + '.';
         showCelebration(
           'Stage Unlocked!',
-          'You mastered ' + variantNames[currentVariantIndex] + '. ' + variantNames[currentVariantIndex + 1] + ' is ready for you now.',
-          {
-            badge: '🎉 New Stage!',
-            continueLabel: 'Stay Here',
-            nextLabel: 'Open ' + variantNames[currentVariantIndex + 1]
-          }
+          'You mastered ' + variantNames[currentVariantIndex] + '. '  }
         );
       } else if (currentVariantIndex < 6 && variantPlayableCounts[currentVariantIndex + 1] === 0) {
         messageEl.textContent = 'Fantastic work! You mastered ' + variantNames[currentVariantIndex] + '.';
@@ -1090,6 +1024,7 @@
 
     enterGameBtn.addEventListener('click', () => {
       introOverlay.style.display = 'none';
+      pickRandomTarget();
     });
 
     celebrationContinueBtn.addEventListener('click', () => {
@@ -1103,8 +1038,8 @@
         masterySets.forEach(set => set.clear());
         selectVariant(0);
         updateStats();
-        messageEl.textContent = 'Press Start to begin again from ግእዝ.';
         helperNoteEl.textContent = 'You can replay the whole adventure from the beginning.';
+        pickRandomTarget();
       }
     });
 
@@ -1115,10 +1050,6 @@
         messageEl.textContent = 'Great! Press Start for the new stage.';
         helperNoteEl.textContent = 'A new family of sounds is ready to explore.';
       }
-    });
-
-    startBtn.addEventListener('click', () => {
-      pickRandomTarget();
     });
 
     replayBtn.addEventListener('click', () => {
