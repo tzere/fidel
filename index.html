@@ -168,11 +168,8 @@
       padding: 8px;
     }
 
-    .intro-art svg {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
+    .intro-art svg,
+    .hero-art svg { width: 100%; height: 100%; display: block; }
 
     .top-grid {
       display: grid;
@@ -183,6 +180,10 @@
 
     .hero-copy,
     .panel { padding: 20px; }
+
+    .hero-art {
+      display: none;
+    }
 
     .stats {
       display: grid;
@@ -215,6 +216,42 @@
       display: grid;
       grid-template-columns: 1fr;
       gap: 18px;
+    }
+
+    .prompt-wrap {
+      background: linear-gradient(180deg, #ffffff, #f8fbff);
+      border-radius: 28px;
+      padding: 24px;
+      text-align: center;
+      box-shadow: inset 0 0 0 1px rgba(148,163,184,0.12);
+    }
+
+    .prompt-label {
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .sound-icon {
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      margin: 10px 0;
+    }
+
+    .message {
+      min-height: 3.4em;
+      font-size: 1.05rem;
+      line-height: 1.55;
+      color: #475569;
+      font-weight: 800;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 18px;
     }
 
     button {
@@ -285,8 +322,8 @@
     }
 
     .variant-grid {
-      grid-template-columns: repeat(2, minmax(100px, 1fr));
-      max-width: 240px;
+      grid-template-columns: 1fr;
+      max-width: 120px;
       margin-bottom: 12px;
     }
 
@@ -458,6 +495,8 @@
         opacity: 0;
       }
     }
+      100% { transform: scale(1); opacity: 1; }
+    }
 
     @media (max-width: 1060px) {
       .top-grid,
@@ -465,17 +504,18 @@
       .intro-card {
         grid-template-columns: 1fr;
       }
-      .intro-art { min-height: 240px; }
+      .intro-art,
+      .hero-art { min-height: 240px; }
     }
 
     @media (max-width: 760px) {
       .container { padding: 16px; }
       .hero-copy,
+      .hero-art,
       .panel,
       .intro-card { padding: 18px; }
       .letter-grid { grid-template-columns: repeat(3, minmax(64px, 1fr)); }
       .stats { grid-template-columns: repeat(2, 1fr); }
-      .variant-grid { max-width: 100%; }
     }
   </style>
 </head>
@@ -606,18 +646,12 @@
 
         <div class="variant-grid" id="variantGrid"></div>
         <div class="letter-grid" id="letterGrid"></div>
-
-        <details class="card" style="margin-top:16px;padding:14px 16px;background:rgba(255,255,255,0.7);" open>
-          <summary style="cursor:pointer;font-weight:900;color:#6d5200;">ግእዝ (2)</summary>
+        <details class="card" id="secondPane" style="margin-top:16px;padding:14px 16px;background:rgba(255,255,255,0.7);">
+          <summary style="cursor:pointer;font-weight:900;color:#6d5200;">Second letter group / ካልኣይ ጉጅለ ፊደላት</summary>
           <div class="mini-note" style="margin-top:10px;">A second practice group for the remaining letters.</div>
           <div class="letter-grid" id="letterGrid2" style="margin-top:12px;"></div>
         </details>
-
         <div class="mini-note" id="activeVariantNote">Active stage: ግእዝ</div>
-        <div class="helper-note" id="helperNote" style="margin-top:16px;">
-          Start with ግእዝ, the first of the 7 letter variants. The ግእዝ letters are already unlocked. When you master all the ግእዝ letters, ካዕብ will unlock, etc.
-        </div>
-        <div class="message" id="message" style="margin-top:16px;">Tap Start / Hear Again to begin.</div>
       </div>
     </section>
   </div>
@@ -668,7 +702,6 @@
     let currentVariantIndex = 0;
     let unlockedVariantIndex = 0;
     let activeSymbols = [];
-    let secondarySymbols = [];
     let target = null;
     let score = 0;
     let rounds = 0;
@@ -709,20 +742,8 @@
       return baseRows.map(row => row[index]).filter(Boolean);
     }
 
-    function getVariantSymbols2(index) {
-      return baseRows2.map(row => row[index]).filter(Boolean);
-    }
-
     function getPlayableSymbolsForVariant(index) {
-      return getVariantSymbols(index).filter(
-        symbol => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim()
-      );
-    }
-
-    function getPlayableSymbolsForVariant2(index) {
-      return getVariantSymbols2(index).filter(
-        symbol => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim()
-      );
+      return getVariantSymbols(index).filter(symbol => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim());
     }
 
     function refreshVariantAvailability() {
@@ -836,8 +857,18 @@
     function buildVariantButtons() {
       variantGrid.innerHTML = `
         <button class="variant-btn active" type="button" aria-label="Current stage">ግእዝ (1)</button>
-        <button class="variant-btn active" type="button" aria-label="Second group">ግእዝ (2)</button>
+        <button class="variant-btn active" id="secondPaneToggle" type="button" aria-label="Second group toggle">ግእዝ (2)</button>
       `;
+
+      const secondPaneToggle = document.getElementById('secondPaneToggle');
+      if (secondPaneToggle) {
+        secondPaneToggle.addEventListener('click', () => {
+          const secondPane = document.getElementById('secondPane');
+          if (secondPane) {
+            secondPane.open = !secondPane.open;
+          }
+        });
+      }
     }
 
     function buildLetterButtons() {
@@ -851,19 +882,18 @@
         btn.addEventListener('click', () => handleGuess(symbol, btn));
         letterGrid.appendChild(btn);
       });
-
-      const totalVisible = activeSymbols.length + secondarySymbols.length;
-      symbolCountPill.textContent = totalVisible + ' sounds';
+      symbolCountPill.textContent = activeSymbols.length + ' sounds';
     }
 
     function buildConfusingLetterButtons() {
+      const confusingSymbols = baseRows2.flat().filter(symbol => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim());
       letterGrid2.innerHTML = '';
-      secondarySymbols.forEach(symbol => {
+      confusingSymbols.forEach(symbol => {
         const btn = document.createElement('button');
         btn.className = 'letter-btn';
         btn.type = 'button';
         btn.textContent = symbol;
-        btn.setAttribute('aria-label', 'Choose second group letter ' + symbol);
+        btn.setAttribute('aria-label', 'Choose confusing letter ' + symbol);
         btn.addEventListener('click', () => handleGuess(symbol, btn));
         letterGrid2.appendChild(btn);
       });
@@ -871,19 +901,16 @@
 
     function updateStageNote() {
       const mastered = masterySets[currentVariantIndex].size;
-      const totalVisible = activeSymbols.length + secondarySymbols.length;
-      activeVariantNote.textContent = 'Active stage: ግእዝ. Mastered ' + mastered + ' of ' + totalVisible + ' playable letters.';
+      activeVariantNote.textContent = 'Active stage: ግእዝ. Mastered ' + mastered + ' of ' + activeSymbols.length + ' playable letters.';
     }
 
     function selectVariant(index) {
       currentVariantIndex = index;
       activeSymbols = getPlayableSymbolsForVariant(index);
-      secondarySymbols = getPlayableSymbolsForVariant2(index);
       target = null;
       gameStarted = false;
       buildVariantButtons();
       buildLetterButtons();
-      buildConfusingLetterButtons();
       updateStageNote();
       messageEl.textContent = 'Listen carefully and tap the matching letter.';
       helperNoteEl.textContent = 'Tap a letter after the sound plays.';
@@ -891,14 +918,13 @@
 
     function chooseRandomUnmasteredOrAny() {
       const mastered = masterySets[currentVariantIndex];
-      const combined = [...activeSymbols, ...secondarySymbols];
-      const remaining = combined.filter(symbol => !mastered.has(symbol));
-      const pool = remaining.length ? remaining : combined;
+      const remaining = activeSymbols.filter(symbol => !mastered.has(symbol));
+      const pool = remaining.length ? remaining : activeSymbols;
       return pool[Math.floor(Math.random() * pool.length)];
     }
 
     function pickRandomTarget() {
-      if (!activeSymbols.length && !secondarySymbols.length) {
+      if (!activeSymbols.length) {
         target = null;
         messageEl.textContent = 'This stage has no playable sounds yet.';
         helperNoteEl.textContent = 'Add one or more .mp3 audio files for this stage to make it playable.';
@@ -914,9 +940,7 @@
 
     function unlockNextVariantIfReady() {
       const masteredCount = masterySets[currentVariantIndex].size;
-      const totalVisible = activeSymbols.length + secondarySymbols.length;
-
-      if (masteredCount < totalVisible) {
+      if (masteredCount < activeSymbols.length) {
         updateStageNote();
         return false;
       }
@@ -957,7 +981,7 @@
 
     function handleGuess(symbol, button) {
       if (!gameStarted || !target) {
-        messageEl.textContent = 'Tap Start / Hear Again to begin.';
+        messageEl.textContent = 'The first sound should play when you tap Start on the welcome screen.';
         return;
       }
 
@@ -973,7 +997,7 @@
         updateStageNote();
         const stageCompleted = unlockNextVariantIfReady();
 
-        if (stageCompleted && masterySets[currentVariantIndex].size === (activeSymbols.length + secondarySymbols.length)) {
+        if (stageCompleted && masterySets[currentVariantIndex].size === activeSymbols.length) {
           return;
         }
 
@@ -1003,7 +1027,6 @@
         recordedAudio = Object.fromEntries(usableEntries);
         refreshVariantAvailability();
         activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
-        secondarySymbols = getPlayableSymbolsForVariant2(currentVariantIndex);
         buildVariantButtons();
         buildLetterButtons();
         buildConfusingLetterButtons();
@@ -1017,12 +1040,11 @@
         }
 
         const readyStages = variantPlayableCounts.filter(count => count > 0).length;
-        helperNoteEl.textContent = 'Sounds loaded! Found ' + usableEntries.length + ' playable sound entries and ' + readyStages + ' playable stage(s). Tap Start / Hear Again to begin.';
+        helperNoteEl.textContent = 'Sounds loaded! Found ' + usableEntries.length + ' playable sound entries and ' + readyStages + ' playable stage(s). Tap Start on the welcome screen.';
       } catch (error) {
         recordedAudio = {};
         refreshVariantAvailability();
         activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
-        secondarySymbols = getPlayableSymbolsForVariant2(currentVariantIndex);
         buildVariantButtons();
         buildLetterButtons();
         buildConfusingLetterButtons();
@@ -1038,12 +1060,8 @@
     });
 
     celebrationContinueBtn.addEventListener('click', () => {
-      const finishedAll =
-        currentVariantIndex === 6 &&
-        masterySets[currentVariantIndex].size === (activeSymbols.length + secondarySymbols.length);
-
+      const finishedAll = currentVariantIndex === 6 && masterySets[currentVariantIndex].size === activeSymbols.length;
       hideCelebration();
-
       if (finishedAll) {
         score = 0;
         rounds = 0;
@@ -1063,7 +1081,7 @@
     });
 
     replayBtn.addEventListener('click', () => {
-      if (!target || !gameStarted) {
+      if (!target) {
         pickRandomTarget();
         return;
       }
@@ -1072,7 +1090,6 @@
 
     refreshVariantAvailability();
     activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
-    secondarySymbols = getPlayableSymbolsForVariant2(currentVariantIndex);
     buildVariantButtons();
     buildLetterButtons();
     buildConfusingLetterButtons();
