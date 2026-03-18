@@ -168,7 +168,8 @@
       padding: 8px;
     }
 
-    .intro-art svg { width: 100%; height: 100%; display: block; }
+    .intro-art svg,
+    .hero-art svg { width: 100%; height: 100%; display: block; }
 
     .top-grid {
       display: grid;
@@ -186,8 +187,6 @@
       overflow: hidden;
       background: linear-gradient(180deg, rgba(255,255,255,0.46), rgba(255,255,255,0.08));
     }
-
-    .hero-art svg { width: 100%; height: 100%; display: block; }
 
     .stats {
       display: grid;
@@ -253,7 +252,7 @@
 
     .action-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 12px;
       margin-top: 18px;
     }
@@ -274,11 +273,6 @@
       font-weight: 900;
       font-size: 1.04rem;
       box-shadow: 0 12px 22px rgba(31, 41, 55, 0.14);
-    }
-
-    .start-btn {
-      background: linear-gradient(135deg, #27c6ff, #1c8ef5);
-      color: white;
     }
 
     .sound-btn {
@@ -331,7 +325,8 @@
     }
 
     .variant-grid {
-      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      grid-template-columns: 1fr;
+      max-width: 220px;
       margin-bottom: 20px;
     }
 
@@ -359,13 +354,6 @@
       background: linear-gradient(180deg, #fff4b5, #ffd86a);
       border-color: var(--gold);
       color: #6d5200;
-    }
-
-    .variant-btn.locked {
-      background: linear-gradient(180deg, #e8eef8, #d8e2ef);
-      color: #8b98a9;
-      opacity: 0.9;
-      cursor: not-allowed;
     }
 
     .letter-btn {
@@ -502,9 +490,7 @@
       .hero-art,
       .panel,
       .intro-card { padding: 18px; }
-      .variant-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
       .letter-grid { grid-template-columns: repeat(3, minmax(64px, 1fr)); }
-      .action-row { grid-template-columns: 1fr; }
       .stats { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
@@ -585,7 +571,7 @@
   </div>
 
   <div class="celebration-overlay" id="celebrationOverlay">
-    <div class="card celebration-card" id="celebrationCard" style="animation: popIn 0.22s ease-out;">
+    <div class="card celebration-card" style="animation: popIn 0.22s ease-out;">
       <div class="stars-layer" id="starsLayer"></div>
       <div class="badge" id="celebrationBadge">⭐ Great Job!</div>
       <h2 id="celebrationTitle">You unlocked a new stage!</h2>
@@ -686,7 +672,12 @@
           <div class="message" id="message">Press Start to hear a random ግእዝ sound.</div>
         </div>
 
-         Start with ግእዝ, the first of the 7 letter variants. The ግእዝ letters are already unlocked. When you master all the ግእዝ letters, ካዕብ will unlock, etc.
+        <div class="action-row">
+          <button class="action-btn sound-btn" id="replayBtn" type="button">🔁 Hear Again - ከም ብሐድዲስ</button>
+        </div>
+
+        <div class="helper-note" id="helperNote">
+          Start with ግእዝ, the first of the 7 letter variants. The ግእዝ letters are already unlocked. When you master all the ግእዝ letters, ካዕብ will unlock, etc.
         </div>
       </div>
 
@@ -696,10 +687,15 @@
           <span class="pill" id="symbolCountPill">ዝሰማዕናዮ ፊደል ንጠውውቕ።</span>
         </div>
 
-        <div class="variant-grid" id="variantGrid" style="grid-template-columns: 1fr; max-width: 220px;"></div>
+        <div class="variant-grid" id="variantGrid"></div>
         <div class="letter-grid" id="letterGrid"></div>
         <div class="mini-note" id="activeVariantNote">Active stage: ግእዝ</div>
-      </dibaseRows = [
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const baseRows = [
       ['ሀ','ሁ','ሂ','ሃ','ሄ','ህ','ሆ'],
       ['ለ','ሉ','ሊ','ላ','ሌ','ል','ሎ'],
       ['ሐ','ሑ','ሒ','ሓ','ሔ','ሕ','ሖ'],
@@ -712,7 +708,7 @@
       ['በ','ቡ','ቢ','ባ','ቤ','ብ','ቦ'],
       ['ተ','ቱ','ቲ','ታ','ቴ','ት','ቶ'],
       ['ቸ','ቹ','ቺ','ቻ','ቼ','ች','ቾ'],
-	  ['ኀ','ኁ','ኂ','ኃ','ኄ','ኅ','ኆ'],
+      ['ኀ','ኁ','ኂ','ኃ','ኄ','ኅ','ኆ'],
       ['ነ','ኑ','ኒ','ና','ኔ','ን','ኖ'],
       ['ኘ','ኙ','ኚ','ኛ','ኜ','ኝ','ኞ'],
       ['አ','ኡ','ኢ','ኣ','ኤ','እ','ኦ'],
@@ -729,7 +725,7 @@
       ['ጨ','ጩ','ጪ','ጫ','ጬ','ጭ','ጮ'],
       ['ጰ','ጱ','ጲ','ጳ','ጴ','ጵ','ጶ'],
       ['ጸ','ጹ','ጺ','ጻ','ጼ','ጽ','ጾ'],
-	  ['ፀ','ፁ','ፂ','ፃ','ፄ','ፅ','ፆ'],
+      ['ፀ','ፁ','ፂ','ፃ','ፄ','ፅ','ፆ'],
       ['ፈ','ፉ','ፊ','ፋ','ፌ','ፍ','ፎ'],
       ['ፐ','ፑ','ፒ','ፓ','ፔ','ፕ','ፖ']
     ];
@@ -740,7 +736,7 @@
 
     let currentVariantIndex = 0;
     let unlockedVariantIndex = 0;
-    let activeSymbols = baseRows.map(row => row[0]);
+    let activeSymbols = [];
     let target = null;
     let score = 0;
     let rounds = 0;
@@ -764,7 +760,9 @@
     const celebrationBadge = document.getElementById('celebrationBadge');
     const celebrationTitle = document.getElementById('celebrationTitle');
     const celebrationText = document.getElementById('celebrationText');
-    const celebrationContinueBtn = document.getElem    const starsLayer = document.getElementById('starsLayer');
+    const celebrationContinueBtn = document.getElementById('celebrationContinueBtn');
+    const celebrationNextBtn = document.getElementById('celebrationNextBtn');
+    const starsLayer = document.getElementById('starsLayer');
 
     function updateStats() {
       scoreEl.textContent = score;
@@ -864,7 +862,7 @@
       const soundValue = recordedAudio[symbol];
       if (!soundValue || typeof soundValue !== 'string' || !soundValue.trim()) {
         messageEl.textContent = 'I could not find a sound for this letter in sounds.json.';
-        helperNoteEl.textContent = 'Check that sounds.json contains a real sound entry for ' + symbol + '. The file can use either a flat map or a package with a symbols field.';
+        helperNoteEl.textContent = 'Check that sounds.json contains a real sound entry for ' + symbol + '.';
         return;
       }
       const audio = new Audio(soundValue);
@@ -890,7 +888,26 @@
         btn.type = 'button';
         btn.textContent = symbol;
         btn.setAttribute('aria-label', 'Choose letter ' + symbol);
-        btn.addEventListesten carefully and tap the matching letter.';
+        btn.addEventListener('click', () => handleGuess(symbol, btn));
+        letterGrid.appendChild(btn);
+      });
+      symbolCountPill.textContent = activeSymbols.length + ' sounds';
+    }
+
+    function updateStageNote() {
+      const mastered = masterySets[currentVariantIndex].size;
+      activeVariantNote.textContent = 'Active stage: ግእዝ. Mastered ' + mastered + ' of ' + activeSymbols.length + ' playable letters.';
+    }
+
+    function selectVariant(index) {
+      currentVariantIndex = index;
+      activeSymbols = getPlayableSymbolsForVariant(index);
+      target = null;
+      gameStarted = false;
+      buildVariantButtons();
+      buildLetterButtons();
+      updateStageNote();
+      messageEl.textContent = 'Listen carefully and tap the matching letter.';
       helperNoteEl.textContent = 'Tap a letter after the sound plays.';
     }
 
@@ -917,16 +934,28 @@
     }
 
     function unlockNextVariantIfReady() {
-      const masteredCe it now has playable sounds.';
+      const masteredCount = masterySets[currentVariantIndex].size;
+      if (masteredCount < activeSymbols.length) {
+        updateStageNote();
+        return false;
+      }
+
+      if (currentVariantIndex < 6 && variantPlayableCounts[currentVariantIndex + 1] > 0) {
+        helperNoteEl.textContent = 'Amazing! ' + variantNames[currentVariantIndex + 1] + ' is now unlocked because it has playable sounds.';
         messageEl.textContent = 'Fantastic work! You mastered ' + variantNames[currentVariantIndex] + '.';
         showCelebration(
           'Stage Unlocked!',
-          'You mastered ' + variantNames[currentVariantIndex] + '. '  }
+          'You mastered ' + variantNames[currentVariantIndex] + '. ' + variantNames[currentVariantIndex + 1] + ' is ready for you now.',
+          {
+            badge: '🎉 New Stage!',
+            continueLabel: 'Stay Here',
+            nextLabel: 'Open ' + variantNames[currentVariantIndex + 1]
+          }
         );
-      } else if (currentVariantIndex < 6 && variantPlayableCounts[currentVariantIndex + 1] === 0) {
+      } else if (currentVariantIndex < 6) {
         messageEl.textContent = 'Fantastic work! You mastered ' + variantNames[currentVariantIndex] + '.';
         helperNoteEl.textContent = 'To unlock ' + variantNames[currentVariantIndex + 1] + ', add at least one .mp3 sound file for that stage.';
-      } else if (currentVariantIndex === 6) {
+      } else {
         messageEl.textContent = 'You finished all seven stages. Great job!';
         helperNoteEl.textContent = 'The child has now mastered the full learning path.';
         showCelebration(
@@ -947,7 +976,7 @@
 
     function handleGuess(symbol, button) {
       if (!gameStarted || !target) {
-        messageEl.textContent = 'Press Start first.';
+        messageEl.textContent = 'The first sound should play when you tap Start on the welcome screen.';
         return;
       }
 
@@ -962,10 +991,6 @@
         updateStats();
         updateStageNote();
         const stageCompleted = unlockNextVariantIfReady();
-
-        if (currentVariantIndex === 6 && masterySets[currentVariantIndex].size === activeSymbols.length) {
-          return;
-        }
 
         if (stageCompleted && masterySets[currentVariantIndex].size === activeSymbols.length) {
           return;
@@ -1004,12 +1029,12 @@
 
         if (!usableEntries.length) {
           messageEl.textContent = 'sounds.json loaded, but it does not contain any usable sound paths yet.';
-          helperNoteEl.textContent = 'Add entries like "ሀ": "audio/ሀ.mp3" or export a package whose symbols field contains real audio data or file paths.';
+          helperNoteEl.textContent = 'Add entries like "ሀ": "audio/ሀ.mp3".';
           return;
         }
 
         const readyStages = variantPlayableCounts.filter(count => count > 0).length;
-        helperNoteEl.textContent = 'Sounds loaded! Found ' + usableEntries.length + ' playable sound entries and ' + readyStages + ' fully playable stage(s). Press Start when you are ready.';
+        helperNoteEl.textContent = 'Sounds loaded! Found ' + usableEntries.length + ' playable sound entries and ' + readyStages + ' playable stage(s). Tap Start on the welcome screen.';
       } catch (error) {
         recordedAudio = {};
         refreshVariantAvailability();
@@ -1018,7 +1043,7 @@
         buildLetterButtons();
         updateStageNote();
         messageEl.textContent = 'The page could not load sounds.json.';
-        helperNoteEl.textContent = 'On GitHub Pages, keep sounds.json beside this HTML file and make sure the JSON contains real .mp3 audio paths or package data.';
+        helperNoteEl.textContent = 'On GitHub Pages, keep sounds.json beside this HTML file and make sure the JSON contains real .mp3 audio paths.';
       }
     }
 
@@ -1033,7 +1058,6 @@
       if (finishedAll) {
         score = 0;
         rounds = 0;
-        unlockedVariantIndex = 0;
         currentVariantIndex = 0;
         masterySets.forEach(set => set.clear());
         selectVariant(0);
@@ -1045,22 +1069,20 @@
 
     celebrationNextBtn.addEventListener('click', () => {
       hideCelebration();
-      if (currentVariantIndex < unlockedVariantIndex) {
-        selectVariant(currentVariantIndex + 1);
-        messageEl.textContent = 'Great! Press Start for the new stage.';
-        helperNoteEl.textContent = 'A new family of sounds is ready to explore.';
-      }
+      messageEl.textContent = 'Great work! More stages can be shown later.';
+      helperNoteEl.textContent = 'For now, the screen stays focused on ግእዝ to keep things simple.';
     });
 
     replayBtn.addEventListener('click', () => {
       if (!target) {
-        messageEl.textContent = 'Press Start to hear a sound.';
+        messageEl.textContent = 'Tap Start / ንስማዕ on the welcome screen to begin.';
         return;
       }
       playSound(target);
     });
 
     refreshVariantAvailability();
+    activeSymbols = getPlayableSymbolsForVariant(currentVariantIndex);
     buildVariantButtons();
     buildLetterButtons();
     updateStats();
