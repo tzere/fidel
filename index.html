@@ -584,8 +584,9 @@
     }
 
     function activePlayable() {
-      const letters = visibleLetters();
-      return letters.filter(symbol => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim());
+      return visibleLetters().filter(
+        (symbol) => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim()
+      );
     }
 
     function updateStats() {
@@ -593,7 +594,8 @@
       roundsEl.textContent = rounds;
       const accuracy = rounds === 0 ? 0 : Math.round((score / rounds) * 100);
       accuracyEl.textContent = accuracy + '%';
-      unlockedCountEl.textContent = (masteryPrimary.length === primaryLetters.length || currentTab === 2) ? '2/2' : '1/2';
+      unlockedCountEl.textContent =
+        masteryPrimary.length === primaryLetters.length || currentTab === 2 ? '2/2' : '1/2';
     }
 
     function updateStageNote() {
@@ -719,7 +721,7 @@
 
     function buildLetterButtons() {
       letterGrid.innerHTML = '';
-      primaryLetters.forEach(symbol => {
+      primaryLetters.forEach((symbol) => {
         const btn = document.createElement('button');
         btn.className = 'letter-btn';
         btn.type = 'button';
@@ -729,13 +731,19 @@
       });
 
       letterGrid2.innerHTML = '';
-      secondaryLetters.forEach(symbol => {
+      secondaryLetters.forEach((symbol) => {
         const btn = document.createElement('button');
         btn.className = 'letter-btn';
         btn.type = 'button';
         btn.textContent = symbol;
         btn.addEventListener('click', () => handleGuess(symbol, btn));
         letterGrid2.appendChild(btn);
+      });
+    }
+
+    function clearLetterStates() {
+      document.querySelectorAll('.letter-btn').forEach((btn) => {
+        btn.classList.remove('correct', 'wrong');
       });
     }
 
@@ -751,7 +759,9 @@
     function chooseAndPlayNext(tab = currentTab) {
       const letters = tab === 1 ? primaryLetters : secondaryLetters;
       const mastered = tab === 1 ? masteryPrimary : masterySecondary;
-      const pool = letters.filter(symbol => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim());
+      const pool = letters.filter(
+        (symbol) => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim()
+      );
 
       if (!pool.length) {
         target = null;
@@ -761,7 +771,8 @@
         return;
       }
 
-      const remaining = pool.filter(symbol => !mastered.includes(symbol));
+      clearLetterStates();
+      const remaining = pool.filter((symbol) => !mastered.includes(symbol));
       const candidates = remaining.length ? remaining : pool;
       target = candidates[Math.floor(Math.random() * candidates.length)];
       gameStarted = true;
@@ -776,7 +787,9 @@
         if (!response.ok) throw new Error('Could not load sounds.json');
         const data = await response.json();
         const resolvedMap = data.symbols && typeof data.symbols === 'object' ? data.symbols : data;
-        const usableEntries = Object.entries(resolvedMap).filter(([, value]) => typeof value === 'string' && value.trim());
+        const usableEntries = Object.entries(resolvedMap).filter(
+          ([, value]) => typeof value === 'string' && value.trim()
+        );
         recordedAudio = Object.fromEntries(usableEntries);
         if (!usableEntries.length) {
           messageEl.textContent = 'sounds.json loaded, but it does not contain any usable sound paths yet.';
@@ -794,67 +807,78 @@
     }
 
     function handleGuess(symbol, button) {
-      if (!gameStarted || !target) {
-        messageEl.textContent = 'Tap Start / Hear Again to begin.';
-        return;
-      }
+	  if (!gameStarted || !target) {
+		messageEl.textContent = 'Tap Start / Hear Again to begin.';
+		return;
+	  }
 
-      if (!activePlayable().includes(symbol)) {
-        messageEl.textContent = 'This letter does not have a recorded sound yet.';
-        helperNoteEl.textContent = 'Use letters with audio in the open tab, or add the missing sound file.';
-        return;
-      }
+	  if (!activePlayable().includes(symbol)) {
+		messageEl.textContent = 'This letter does not have a recorded sound yet.';
+		helperNoteEl.textContent = 'Use letters with audio in the open tab, or add the missing sound file.';
+		return;
+	  }
 
-      rounds += 1;
+	  rounds += 1;
+	  clearLetterStates();
 
-      if (symbol === target) {
-        score += 1;
-        playCorrectChime();
+	  if (symbol === target) {
+		score += 1;
+		button.classList.add('correct');
+		playCorrectChime();
 
-        if (currentTab === 1) {
-          masteryPrimary = Array.from(new Set([...masteryPrimary, symbol]));
-          if (masteryPrimary.length === primaryLetters.length) {
-            gameStarted = false;
-            target = null;
-            render();
-            showCelebration({
-              title: '🎉 Tab 1 Complete! 🎉',
-              text: 'Wonderful! You finished ግእዝ (1). Now let us practice ግእዝ (2).',
-              badge: '🌟 Great Job! 🌟',
-              continueLabel: 'Open ግእዝ (2)',
-              nextLabel: 'Open ግእዝ (2)',
-              final: false
-            });
-            return;
-          }
-        } else {
-          masterySecondary = Array.from(new Set([...masterySecondary, symbol]));
-          if (masterySecondary.length === secondaryLetters.length) {
-            gameStarted = false;
-            target = null;
-            render();
-            showCelebration({
-              title: '🏆 Amazing! You finished both tabs! 🏆',
-              text: 'You completed ግእዝ (1) and ግእዝ (2). Fantastic work!',
-              badge: '🎊 Superstar! 🎊',
-              continueLabel: 'Play Again',
-              nextLabel: '',
-              final: true
-            });
-            return;
-          }
-        }
+		if (currentTab === 1) {
+		  masteryPrimary = Array.from(new Set([...masteryPrimary, symbol]));
+		  updateStats();
+		  updateStageNote();
 
-        render();
-        messageEl.textContent = 'Wonderful! Here comes the next sound.';
-        setTimeout(() => chooseAndPlayNext(), 900);
-      } else {
-        render();
-        messageEl.textContent = 'Almost! Listen again and try once more.';
-        helperNoteEl.textContent = 'You are still working in ' + (currentTab === 1 ? 'ግእዝ (1)' : 'ግእዝ (2)') + '.';
-        setTimeout(() => playSound(target), 260);
-      }
-    }
+		  if (masteryPrimary.length === primaryLetters.length) {
+			gameStarted = false;
+			target = null;
+			showCelebration({
+			  title: '🎉 Tab 1 Complete! 🎉',
+			  text: 'Wonderful! You finished ግእዝ (1). Now let us practice ግእዝ (2).',
+			  badge: '🌟 Great Job! 🌟',
+			  continueLabel: 'Open ግእዝ (2)',
+			  nextLabel: 'Open ግእዝ (2)',
+			  final: false
+			});
+			return;
+		  }
+		} else {
+		  masterySecondary = Array.from(new Set([...masterySecondary, symbol]));
+		  updateStats();
+		  updateStageNote();
+
+		  if (masterySecondary.length === secondaryLetters.length) {
+			gameStarted = false;
+			target = null;
+			showCelebration({
+			  title: '🏆 Amazing! You finished both tabs! 🏆',
+			  text: 'You completed ግእዝ (1) and ግእዝ (2). Fantastic work!',
+			  badge: '🎊 Superstar! 🎊',
+			  continueLabel: 'Play Again',
+			  nextLabel: '',
+			  final: true
+			});
+			return;
+		  }
+		}
+
+		messageEl.textContent = 'Wonderful! Here comes the next sound.';
+		setTimeout(() => {
+		  clearLetterStates();
+		  chooseAndPlayNext();
+		}, 900);
+	  } else {
+		button.classList.add('wrong');
+		updateStats();
+		updateStageNote();
+		messageEl.textContent = 'Almost! Listen again and try once more.';
+		helperNoteEl.textContent =
+		  'You are still working in ' + (currentTab === 1 ? 'ግእዝ (1)' : 'ግእዝ (2)') + '.';
+		setTimeout(() => playSound(target), 260);
+	  }
+	}
 
     function handleReplay() {
       if (!activePlayable().length) {
