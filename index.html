@@ -79,17 +79,17 @@
     }
 
     .card {
-      background: rgba(255,255,255,0.92);
+      background: var(--card);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.65);
+      border: 1px solid var(--border);
       border-radius: 34px;
-      box-shadow: 0 18px 40px rgba(31, 41, 55, 0.16);
+      box-shadow: var(--shadow);
     }
 
     .intro-overlay {
       position: fixed;
       inset: 0;
-      z-index: 10;
+      z-index: 20;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -129,23 +129,43 @@
     .subtitle {
       margin: 0;
       line-height: 1.65;
-      color: #5b6678;
+      color: var(--muted);
       font-size: 1.08rem;
     }
 
-    .start-big {
+    .start-big,
+    .continue-big,
+    .restart-big {
       margin-top: 18px;
-      min-height: 68px;
-      padding: 0 28px;
+      min-height: 64px;
+      padding: 0 24px;
       border-radius: 24px;
-      background: linear-gradient(135deg, #20c6ff, #1f7df3);
       color: #fff;
       border: none;
       font: inherit;
       font-weight: 900;
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       cursor: pointer;
       box-shadow: 0 14px 28px rgba(31, 125, 243, 0.28);
+    }
+
+    .start-big {
+      background: linear-gradient(135deg, #20c6ff, #1f7df3);
+    }
+
+    .continue-big {
+      background: linear-gradient(135deg, #34d399, #059669);
+    }
+
+    .restart-big {
+      background: linear-gradient(135deg, #fb7185, #e11d48);
+    }
+
+    .intro-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
     }
 
     .intro-art {
@@ -184,7 +204,7 @@
     }
 
     .stat-label {
-      color: #5b6678;
+      color: var(--muted);
       font-size: 0.88rem;
       font-weight: 800;
     }
@@ -212,15 +232,21 @@
     button:active { transform: scale(0.98); }
 
     .action-btn {
-      min-height: 62px;
-      border-radius: 22px;
+      min-height: 54px;
+      border-radius: 18px;
       font-weight: 900;
-      font-size: 1.04rem;
+      font-size: 1rem;
       box-shadow: 0 12px 22px rgba(31, 41, 55, 0.14);
+      padding: 0 16px;
     }
 
     .sound-btn {
       background: linear-gradient(135deg, #27c6ff, #1c8ef5);
+      color: white;
+    }
+
+    .reset-btn {
+      background: linear-gradient(135deg, #fb7185, #e11d48);
       color: white;
     }
 
@@ -253,6 +279,12 @@
       margin-bottom: 16px;
     }
 
+    .left-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
     .letters-top h2 {
       margin: 0;
       font-size: 1.8rem;
@@ -280,7 +312,7 @@
 
     .variant-grid {
       grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     .part-grid {
@@ -295,7 +327,7 @@
       min-height: 86px;
       border-radius: 24px;
       font-weight: 900;
-      color: #1f2937;
+      color: var(--text);
       background: linear-gradient(180deg, #ffffff, #fff6fb);
       box-shadow: 0 10px 18px rgba(148, 163, 184, 0.18);
       border: 3px solid transparent;
@@ -312,7 +344,7 @@
     .variant-btn.active,
     .part-btn.active {
       background: linear-gradient(180deg, #fff4b5, #ffd86a);
-      border-color: #f4b400;
+      border-color: var(--gold);
       color: #6d5200;
     }
 
@@ -320,13 +352,6 @@
       background: linear-gradient(180deg, #dcfce7, #86efac);
       border-color: #1db954;
       color: #14532d;
-    }
-
-    .variant-btn.locked,
-    .part-btn.locked {
-      opacity: 0.55;
-      cursor: not-allowed;
-      filter: grayscale(0.15);
     }
 
     .letter-grid {
@@ -352,14 +377,14 @@
     .mini-note {
       margin-top: 14px;
       font-size: 0.98rem;
-      color: #5b6678;
+      color: var(--muted);
       font-weight: 800;
     }
 
     .celebration-overlay {
       position: fixed;
       inset: 0;
-      z-index: 12;
+      z-index: 25;
       display: none;
       align-items: center;
       justify-content: center;
@@ -384,7 +409,7 @@
 
     .celebration-card p {
       margin: 0;
-      color: #5b6678;
+      color: var(--muted);
       font-size: 1.08rem;
       line-height: 1.6;
       font-weight: 800;
@@ -487,9 +512,13 @@
         <div class="badge">🌟 Welcome . መርሐባ!</div>
         <h1>ምልከት ፊደላት</h1>
         <p>
-          Welcome! This app will help you to master the Geez Fidelat. Listen to a letter sound, tap the matching Geez letter, and unlock the next variant step by step.
+          Welcome! This app will help you to master the Geez Fidelat. You can continue from where you left off, review completed variants, or start again from ግእዝ.
         </p>
-        <button class="start-big" id="enterGameBtn" type="button">🎉 Start / ንስማዕ</button>
+        <div class="intro-actions">
+          <button class="start-big" id="enterGameBtn" type="button">🎉 Start / ንስማዕ</button>
+          <button class="continue-big" id="continueBtn" type="button" style="display:none;">▶ Continue</button>
+          <button class="restart-big" id="restartIntroBtn" type="button">↺ Reset - ናብ ፈለማ</button>
+        </div>
       </div>
       <div class="intro-art" aria-hidden="true">
         <svg viewBox="0 0 540 320" role="img">
@@ -527,7 +556,7 @@
       <div class="card hero-copy">
         <div class="badge">🌈 Listen • Match • Unlock</div>
         <h1>ምልከት ፊደላት</h1>
-        <p class="subtitle">Practice the 7 Geez variants. Each new variant unlocks only after the previous one is mastered.</p>
+        <p class="subtitle">Practice all seven variants. Completed variants stay open for review.</p>
         <div class="stats" aria-label="Game statistics">
           <div class="stat"><div class="stat-label">Score</div><div class="stat-value" id="score">0</div></div>
           <div class="stat"><div class="stat-label">Rounds</div><div class="stat-value" id="rounds">0</div></div>
@@ -540,7 +569,10 @@
     <section class="main-grid">
       <div class="card panel">
         <div class="letters-top">
-          <button class="action-btn sound-btn" id="replayBtn" type="button" style="min-height:48px;padding:0 16px;font-size:0.95rem;">▶ Start / Hear Again</button>
+          <div class="left-actions">
+            <button class="action-btn sound-btn" id="replayBtn" type="button">▶ Start / Hear Again</button>
+            <button class="action-btn reset-btn" id="resetBtn" type="button">↺ Start Again</button>
+          </div>
           <h2>Choose the matching letter.</h2>
           <span class="pill" id="symbolCountPill">0 letters</span>
         </div>
@@ -557,6 +589,8 @@
   </div>
 
   <script>
+    const STORAGE_KEY = 'geez-fidelat-progress-v3';
+
     const variantNames = ['ግእዝ', 'ካዕብ', 'ሣልስ', 'ራብዕ', 'ኀምስ', 'ሳድስ', 'ሳብዕ'];
 
     const primaryRows = [
@@ -592,6 +626,10 @@
       ['ፈ','ፉ','ፊ','ፋ','ፌ','ፍ','ፎ']
     ];
 
+    function makeEmptyMastery() {
+      return variantNames.map(() => ({ part1: [], part2: [] }));
+    }
+
     let currentVariant = 0;
     let currentPart = 1;
     let target = null;
@@ -599,13 +637,15 @@
     let rounds = 0;
     let gameStarted = false;
     let recordedAudio = {};
+    let mastery = makeEmptyMastery();
     let currentAudio = null;
     let celebration = null;
 
-    const mastery = variantNames.map(() => ({ part1: [], part2: [] }));
-
     const introOverlay = document.getElementById('introOverlay');
     const enterGameBtn = document.getElementById('enterGameBtn');
+    const continueBtn = document.getElementById('continueBtn');
+    const restartIntroBtn = document.getElementById('restartIntroBtn');
+
     const scoreEl = document.getElementById('score');
     const roundsEl = document.getElementById('rounds');
     const accuracyEl = document.getElementById('accuracy');
@@ -618,6 +658,8 @@
     const activeVariantNote = document.getElementById('activeVariantNote');
     const symbolCountPill = document.getElementById('symbolCountPill');
     const replayBtn = document.getElementById('replayBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
     const celebrationOverlay = document.getElementById('celebrationOverlay');
     const celebrationBadge = document.getElementById('celebrationBadge');
     const celebrationTitle = document.getElementById('celebrationTitle');
@@ -628,7 +670,11 @@
 
     function getSymbolsFor(variantIndex, part) {
       const rows = part === 1 ? primaryRows : secondaryRows;
-      return rows.map(row => row[variantIndex]).filter(Boolean);
+      return rows.map((row) => row[variantIndex]).filter(Boolean);
+    }
+
+    function getMasteryFor(variantIndex, part) {
+      return part === 1 ? mastery[variantIndex].part1 : mastery[variantIndex].part2;
     }
 
     function visibleLetters() {
@@ -636,13 +682,11 @@
     }
 
     function activeMastery() {
-      return currentPart === 1 ? mastery[currentVariant].part1 : mastery[currentVariant].part2;
+      return getMasteryFor(currentVariant, currentPart);
     }
 
     function activePlayable() {
-      return visibleLetters().filter(
-        symbol => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim()
-      );
+      return visibleLetters().filter((symbol) => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim());
     }
 
     function isVariantComplete(variantIndex) {
@@ -668,6 +712,21 @@
       return list;
     }
 
+    function hasSavedProgress() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        return !!parsed;
+      } catch {
+        return false;
+      }
+    }
+
+    function updateContinueButton() {
+      continueBtn.style.display = hasSavedProgress() ? 'inline-flex' : 'none';
+    }
+
     function updateStats() {
       scoreEl.textContent = score;
       roundsEl.textContent = rounds;
@@ -678,10 +737,22 @@
 
     function updateStageNote() {
       activeVariantNote.textContent =
-        'Active stage: ' + variantNames[currentVariant] +
-        ' — Part ' + currentPart +
+        'Active stage: ' + variantNames[currentVariant] + ' — Part ' + currentPart +
         '. Mastered ' + activeMastery().length + ' of ' + visibleLetters().length + ' letters.';
       symbolCountPill.textContent = visibleLetters().length + ' letters';
+    }
+
+    function saveProgress() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          currentVariant,
+          currentPart,
+          score,
+          rounds,
+          mastery
+        }));
+      } catch (e) {}
+      updateContinueButton();
     }
 
     function stopAudio() {
@@ -782,21 +853,24 @@
     }
 
     function buildVariantButtons() {
-      const visibleIndexes = getVisibleVariantIndexes();
       variantGrid.innerHTML = '';
-
-      visibleIndexes.forEach(index => {
+      const visibleIndexes = getVisibleVariantIndexes();
+      visibleIndexes.forEach((variantIndex) => {
         const btn = document.createElement('button');
         btn.className = 'variant-btn';
-        if (index === currentVariant) btn.classList.add('active');
-        if (isVariantComplete(index)) btn.classList.add('complete');
-
+        if (variantIndex === currentVariant) btn.classList.add('active');
+        if (isVariantComplete(variantIndex)) btn.classList.add('complete');
         btn.type = 'button';
-        btn.textContent = variantNames[index];
+        btn.textContent = variantNames[variantIndex];
         btn.addEventListener('click', () => {
-          currentVariant = index;
+          currentVariant = variantIndex;
           currentPart = 1;
+          gameStarted = false;
+          target = null;
           render();
+          messageEl.textContent = 'Opened ' + variantNames[variantIndex] + '.';
+          helperNoteEl.textContent = 'Reviewing ' + variantNames[variantIndex] + '. A sound will play now.';
+          setTimeout(() => chooseAndPlayNext(currentVariant, currentPart), 80);
         });
         variantGrid.appendChild(btn);
       });
@@ -811,7 +885,12 @@
       p1.textContent = 'Part 1';
       p1.addEventListener('click', () => {
         currentPart = 1;
+        gameStarted = false;
+        target = null;
         render();
+        messageEl.textContent = 'Opened part 1.';
+        helperNoteEl.textContent = 'A sound will play now.';
+        setTimeout(() => chooseAndPlayNext(currentVariant, 1), 80);
       });
 
       const p2 = document.createElement('button');
@@ -820,7 +899,12 @@
       p2.textContent = 'Part 2';
       p2.addEventListener('click', () => {
         currentPart = 2;
+        gameStarted = false;
+        target = null;
         render();
+        messageEl.textContent = 'Opened part 2.';
+        helperNoteEl.textContent = 'A sound will play now.';
+        setTimeout(() => chooseAndPlayNext(currentVariant, 2), 80);
       });
 
       partGrid.appendChild(p1);
@@ -829,7 +913,7 @@
 
     function buildLetterButtons() {
       letterGrid.innerHTML = '';
-      visibleLetters().forEach(symbol => {
+      visibleLetters().forEach((symbol) => {
         const btn = document.createElement('button');
         btn.className = 'letter-btn';
         btn.type = 'button';
@@ -840,7 +924,7 @@
     }
 
     function clearLetterStates() {
-      document.querySelectorAll('.letter-btn').forEach(btn => {
+      document.querySelectorAll('.letter-btn').forEach((btn) => {
         btn.classList.remove('correct', 'wrong');
       });
     }
@@ -855,10 +939,8 @@
 
     function chooseAndPlayNext(variantIndex = currentVariant, part = currentPart) {
       const letters = getSymbolsFor(variantIndex, part);
-      const mastered = part === 1 ? mastery[variantIndex].part1 : mastery[variantIndex].part2;
-      const pool = letters.filter(
-        symbol => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim()
-      );
+      const mastered = getMasteryFor(variantIndex, part);
+      const pool = letters.filter((symbol) => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim());
 
       if (!pool.length) {
         target = null;
@@ -869,13 +951,14 @@
       }
 
       clearLetterStates();
-      const remaining = pool.filter(symbol => !mastered.includes(symbol));
+      const remaining = pool.filter((symbol) => !mastered.includes(symbol));
       const candidates = remaining.length ? remaining : pool;
       target = candidates[Math.floor(Math.random() * candidates.length)];
       gameStarted = true;
       messageEl.textContent = 'Listen carefully and tap the matching letter.';
       helperNoteEl.textContent = 'Tap Start / Hear Again to replay the current sound.';
       setTimeout(() => playSound(target), 120);
+      saveProgress();
     }
 
     async function loadSounds() {
@@ -884,15 +967,15 @@
         if (!response.ok) throw new Error('Could not load sounds.json');
         const data = await response.json();
         const resolvedMap = data.symbols && typeof data.symbols === 'object' ? data.symbols : data;
-        const usableEntries = Object.entries(resolvedMap).filter(
-          ([, value]) => typeof value === 'string' && value.trim()
-        );
+        const usableEntries = Object.entries(resolvedMap).filter(([, value]) => typeof value === 'string' && value.trim());
         recordedAudio = Object.fromEntries(usableEntries);
+
         if (!usableEntries.length) {
           messageEl.textContent = 'sounds.json loaded, but it does not contain any usable sound paths yet.';
           helperNoteEl.textContent = 'Add entries like "ሀ": "audio/ሀ.mp3".';
           return false;
         }
+
         helperNoteEl.textContent = 'Sounds loaded! The first sound will play now.';
         return true;
       } catch (e) {
@@ -923,11 +1006,12 @@
         button.classList.add('correct');
         playCorrectChime();
 
-        const masteryList = currentPart === 1 ? mastery[currentVariant].part1 : mastery[currentVariant].part2;
+        const masteryList = getMasteryFor(currentVariant, currentPart);
         if (!masteryList.includes(symbol)) masteryList.push(symbol);
 
         updateStats();
         updateStageNote();
+        saveProgress();
 
         const partComplete = masteryList.length === getSymbolsFor(currentVariant, currentPart).length;
 
@@ -985,9 +1069,9 @@
         button.classList.add('wrong');
         updateStats();
         updateStageNote();
+        saveProgress();
         messageEl.textContent = 'Almost! Listen again and try once more.';
-        helperNoteEl.textContent =
-          'You are still working in ' + variantNames[currentVariant] + ' — Part ' + currentPart + '.';
+        helperNoteEl.textContent = 'You are still working in ' + variantNames[currentVariant] + ' — Part ' + currentPart + '.';
         setTimeout(() => playSound(target), 260);
       }
     }
@@ -1005,6 +1089,51 @@
       playSound(target);
     }
 
+    function resetProgress() {
+      score = 0;
+      rounds = 0;
+      target = null;
+      gameStarted = false;
+      currentVariant = 0;
+      currentPart = 1;
+      mastery = makeEmptyMastery();
+      hideCelebration();
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e) {}
+      render();
+      messageEl.textContent = 'Fresh start ready. Tap Start / Hear Again to begin with ግእዝ.';
+      helperNoteEl.textContent = 'Only ግእዝ is open now.';
+      updateContinueButton();
+    }
+
+    function loadSavedProgressIntoState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        if (!parsed) return false;
+
+        currentVariant = typeof parsed.currentVariant === 'number' ? parsed.currentVariant : 0;
+        currentPart = parsed.currentPart === 2 ? 2 : 1;
+        score = typeof parsed.score === 'number' ? parsed.score : 0;
+        rounds = typeof parsed.rounds === 'number' ? parsed.rounds : 0;
+
+        if (Array.isArray(parsed.mastery) && parsed.mastery.length === variantNames.length) {
+          mastery = parsed.mastery.map((item) => ({
+            part1: Array.isArray(item.part1) ? item.part1 : [],
+            part2: Array.isArray(item.part2) ? item.part2 : []
+          }));
+        } else {
+          mastery = makeEmptyMastery();
+        }
+
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
     function handleCelebrationContinue() {
       const action = celebration && celebration.action;
       hideCelebration();
@@ -1012,7 +1141,8 @@
       if (action === 'next-part') {
         currentPart = 2;
         render();
-        messageEl.textContent = 'Great! Now listen for a sound from part 2.';
+        saveProgress();
+        messageEl.textContent = 'Great! Now listen for a sound from ' + variantNames[currentVariant] + ' part 2.';
         helperNoteEl.textContent = 'You finished part 1. Let us begin part 2.';
         setTimeout(() => chooseAndPlayNext(currentVariant, 2), 100);
         return;
@@ -1022,44 +1152,21 @@
         currentVariant += 1;
         currentPart = 1;
         render();
-        messageEl.textContent = 'Great! A new variant is ready.';
-        helperNoteEl.textContent = 'Let us begin ' + variantNames[currentVariant] + ' with part 1.';
+        saveProgress();
+        messageEl.textContent = 'Great! ' + variantNames[currentVariant] + ' is ready.';
+        helperNoteEl.textContent = 'Let us begin ' + variantNames[currentVariant] + ' — Part 1.';
         setTimeout(() => chooseAndPlayNext(currentVariant, 1), 100);
         return;
       }
 
       if (action === 'restart') {
-        score = 0;
-        rounds = 0;
-        target = null;
-        gameStarted = false;
-        currentVariant = 0;
-        currentPart = 1;
-        for (const item of mastery) {
-          item.part1 = [];
-          item.part2 = [];
-        }
-        render();
-        messageEl.textContent = 'Amazing! Tap Start / Hear Again to play from the beginning.';
-        helperNoteEl.textContent = 'You completed all variants. Ready for another round?';
+        resetProgress();
       }
     }
 
     function handleCelebrationNext() {
       if (!celebration || celebration.final) return;
-      const action = celebration.action;
-      hideCelebration();
-
-      if (action === 'next-part') {
-        currentPart = 2;
-        render();
-        setTimeout(() => chooseAndPlayNext(currentVariant, 2), 100);
-      } else if (action === 'next-variant') {
-        currentVariant += 1;
-        currentPart = 1;
-        render();
-        setTimeout(() => chooseAndPlayNext(currentVariant, 1), 100);
-      }
+      handleCelebrationContinue();
     }
 
     async function handleIntroStart() {
@@ -1068,15 +1175,46 @@
       currentVariant = 0;
       currentPart = 1;
       render();
+      saveProgress();
+      if (ok) setTimeout(() => chooseAndPlayNext(0, 1), 100);
+    }
+
+    async function handleContinueStart() {
+      const restored = loadSavedProgressIntoState();
+      introOverlay.style.display = 'none';
+      const ok = await loadSounds();
+      if (!restored) {
+        currentVariant = 0;
+        currentPart = 1;
+      }
+      render();
+      saveProgress();
+      if (ok) {
+        messageEl.textContent = 'Welcome back! Continuing from ' + variantNames[currentVariant] + ' — Part ' + currentPart + '.';
+        helperNoteEl.textContent = 'Your saved progress has been restored.';
+        setTimeout(() => chooseAndPlayNext(currentVariant, currentPart), 120);
+      }
+    }
+
+    async function handleFreshStart() {
+      resetProgress();
+      introOverlay.style.display = 'none';
+      const ok = await loadSounds();
+      render();
+      saveProgress();
       if (ok) setTimeout(() => chooseAndPlayNext(0, 1), 100);
     }
 
     enterGameBtn.addEventListener('click', handleIntroStart);
+    continueBtn.addEventListener('click', handleContinueStart);
+    restartIntroBtn.addEventListener('click', handleFreshStart);
     replayBtn.addEventListener('click', handleReplay);
+    resetBtn.addEventListener('click', handleFreshStart);
     celebrationContinueBtn.addEventListener('click', handleCelebrationContinue);
     celebrationNextBtn.addEventListener('click', handleCelebrationNext);
 
     render();
+    updateContinueButton();
   </script>
 </body>
 </html>
