@@ -47,25 +47,29 @@
   <div class="container">
     <section class="top-grid">
       <div class="card hero-copy">
-        <div class="badge">🌈 Listen • Match • Unlock</div>
-        <h1>ምልከት ፊደላት</h1>
-        <p class="subtitle">Practice all seven variants. Completed variants stay open for review.</p>
-        <div class="stats" aria-label="Game statistics">
-          <div class="stat">
-            <div class="stat-label">Score</div>
-            <div class="stat-value" id="score">0</div>
+        <div class="hero-top">
+          <div>
+            <div class="badge">🌈 Listen • Match • Unlock</div>
+            <h1>ምልከት ፊደላት</h1>
+            <p class="subtitle">Practice all seven variants. Completed variants stay open for review.</p>
           </div>
-          <div class="stat">
-            <div class="stat-label">Rounds</div>
-            <div class="stat-value" id="rounds">0</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Accuracy</div>
-            <div class="stat-value" id="accuracy">0%</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Unlocked</div>
-            <div class="stat-value" id="unlockedCount">1/7</div>
+          <div class="stats compact-stats" aria-label="Game statistics">
+            <div class="stat compact">
+              <div class="stat-label">Score</div>
+              <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat compact">
+              <div class="stat-label">Rounds</div>
+              <div class="stat-value" id="rounds">0</div>
+            </div>
+            <div class="stat compact">
+              <div class="stat-label">Accuracy</div>
+              <div class="stat-value" id="accuracy">0%</div>
+            </div>
+            <div class="stat compact">
+              <div class="stat-label">Unlocked</div>
+              <div class="stat-value" id="unlockedCount">1/7</div>
+            </div>
           </div>
         </div>
       </div>
@@ -73,29 +77,22 @@
 
     <section class="main-grid">
       <div class="card panel">
-        <div class="letters-top">
-          <div class="left-actions">
-            <button class="action-btn sound-btn" id="replayBtn" type="button">▶ Play / ንስማዕ</button>
-          </div>
+        <div class="letters-top compact-top">
           <h2>What did you hear? እንታይ ሰሚዕና?</h2>
-          <span class="pill" id="symbolCountPill">0 letters</span>
-        </div>
-
-        <div class="prompt-card">
-          <div class="prompt-top">
-            <div class="prompt-title">Current sound</div>
-            <div class="sound-reveal" id="soundReveal" role="button" tabindex="0" aria-label="Listen again - ድገምያ">
-              <span>🔊</span>
-              <span id="soundRevealText">Ready</span>
+          <div class="top-actions-right">
+            <button class="action-btn sound-btn" id="replayBtn" type="button">▶ Play / ንስማዕ</button>
+            <button class="sound-link" id="soundReveal" type="button" aria-label="Listen again - ድገምያ">
+              🔊 <span id="soundRevealText">Listen again - ድገምያ</span>
               <span class="sound-dot-wrap" id="soundDots" style="display:none;">
                 <span class="sound-dot"></span>
                 <span class="sound-dot"></span>
                 <span class="sound-dot"></span>
               </span>
-            </div>
+            </button>
           </div>
-          <div id="partFinishedBanner" style="display:none;"></div>
         </div>
+
+        <div id="partFinishedBanner" style="display:none;"></div>
 
         <div class="variant-grid" id="variantGrid"></div>
         <div class="letter-grid" id="letterGrid"></div>

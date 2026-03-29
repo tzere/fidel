@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'geez-fidelat-progress-v6';
+const STORAGE_KEY = 'geez-fidelat-progress-v8';
 
 const variantNames = ['ግእዝ', 'ካዕብ', 'ሣልስ', 'ራብዕ', 'ኀምስ', 'ሳድስ', 'ሳብዕ'];
 
@@ -63,7 +63,6 @@ const helperNoteEl = document.getElementById('helperNote');
 const variantGrid = document.getElementById('variantGrid');
 const letterGrid = document.getElementById('letterGrid');
 const activeVariantNote = document.getElementById('activeVariantNote');
-const symbolCountPill = document.getElementById('symbolCountPill');
 const replayBtn = document.getElementById('replayBtn');
 const resetBtn = document.getElementById('resetBtn');
 const dangerZone = document.getElementById('dangerZone');
@@ -157,7 +156,6 @@ function updateStageNote() {
     ' of ' +
     (getSymbolsFor(currentVariant, 1).length + getSymbolsFor(currentVariant, 2).length) +
     ' letters.';
-  symbolCountPill.textContent = visibleLetters().length + ' letters';
 }
 
 function saveProgress() {
@@ -428,7 +426,7 @@ function chooseAndPlayNext(variantIndex = currentVariant, part = currentPart) {
 
   setTimeout(() => {
     playSound(target);
-    setRevealState('idle', 'Listen again');
+    setRevealState('idle', 'Listen again - ድገምያ');
     setReplayButtonState('ready');
     setMessageTone('info');
     messageEl.textContent = 'Now tap the matching letter.';
@@ -483,13 +481,11 @@ function handleGuess(symbol, button) {
   if (symbol === target) {
     score += 1;
     button.classList.add('correct');
-    playCorrectChime();
-    setMessageTone('success');
-    setRevealState('idle', 'Correct!');
 
     const masteryList = getMasteryFor(currentVariant, currentPart);
     if (!masteryList.includes(symbol)) masteryList.push(symbol);
 
+    playCorrectChime();
     updateStats();
     updateStageNote();
     saveProgress();
@@ -552,6 +548,8 @@ function handleGuess(symbol, button) {
       }
     }
 
+    setMessageTone('success');
+    setRevealState('idle', 'Correct!');
     messageEl.textContent = 'Wonderful! Here comes the next sound.';
     setTimeout(() => {
       clearLetterStates();
@@ -560,7 +558,7 @@ function handleGuess(symbol, button) {
   } else {
     button.classList.add('wrong');
     setMessageTone('error');
-    setRevealState('idle', 'Try again');
+    setRevealState('idle', 'Listen again - ድገምያ');
     setReplayButtonState('attention');
     updateStats();
     updateStageNote();
@@ -591,7 +589,7 @@ function handleReplay() {
 
   setTimeout(() => {
     playSound(target);
-    setRevealState('idle', 'Listen again');
+    setRevealState('idle', 'Listen again - ድገምያ');
     setReplayButtonState('ready');
     messageEl.textContent = 'Listen again, then tap the matching letter.';
   }, 120);
@@ -618,7 +616,7 @@ function resetProgress() {
   } catch (e) {}
   render();
   setMessageTone('info');
-  setRevealState('Fresh start', 'Fresh start');
+  setRevealState('idle', 'Fresh start');
   setReplayButtonState('ready');
   hidePartFinishedBanner();
   messageEl.textContent = 'Fresh start ready. Tap Play / ንስማዕ to begin with ግእዝ.';
@@ -724,5 +722,5 @@ render();
 updateContinueButton();
 updateDangerZoneVisibility();
 setMessageTone('info');
-setRevealState('idle', 'Ready');
+setRevealState('idle', 'Listen again - ድገምያ');
 setReplayButtonState('ready');
