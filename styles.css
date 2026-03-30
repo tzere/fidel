@@ -83,7 +83,7 @@ body {
   border-radius: 36px;
   background:
     linear-gradient(rgba(255,255,255,0.22), rgba(255,255,255,0.22)),
-    url("background.jpg") center center / cover no-repeat;
+    url("background.png") center center / cover no-repeat;
   opacity: 1;
   pointer-events: none;
 }

@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'geez-fidelat-progress-v8';
+const STORAGE_KEY = 'geez-fidelat-progress-v10';
 
 const variantNames = ['ግእዝ', 'ካዕብ', 'ሣልስ', 'ራብዕ', 'ኀምስ', 'ሳድስ', 'ሳብዕ'];
 
@@ -49,6 +49,7 @@ let recordedAudio = {};
 let mastery = makeEmptyMastery();
 let currentAudio = null;
 let celebration = null;
+let reviewSession = null;
 
 const introOverlay = document.getElementById('introOverlay');
 const enterGameBtn = document.getElementById('enterGameBtn');
@@ -96,6 +97,33 @@ function visibleLetters() {
 
 function activePlayable() {
   return visibleLetters().filter((symbol) => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim());
+}
+
+function startReviewSession(variantIndex) {
+  reviewSession = {
+    variantIndex,
+    part1: [],
+    part2: []
+  };
+}
+
+function clearReviewSession() {
+  reviewSession = null;
+}
+
+function isReviewingVariant(variantIndex = currentVariant) {
+  return !!reviewSession && reviewSession.variantIndex === variantIndex;
+}
+
+function getProgressFor(variantIndex, part) {
+  if (isReviewingVariant(variantIndex)) {
+    return part === 1 ? reviewSession.part1 : reviewSession.part2;
+  }
+  return getMasteryFor(variantIndex, part);
+}
+
+function getSavedCompletedCountForVariant(variantIndex) {
+  return mastery[variantIndex].part1.length + mastery[variantIndex].part2.length;
 }
 
 function isVariantComplete(variantIndex) {
@@ -149,10 +177,21 @@ function updateStats() {
 }
 
 function updateStageNote() {
+  if (isReviewingVariant()) {
+    const progress = getProgressFor(currentVariant, currentPart);
+    activeVariantNote.textContent =
+      'Reviewing: ' + variantNames[currentVariant] +
+      ' — Part ' + currentPart +
+      '. Completed ' + progress.length +
+      ' of ' + getSymbolsFor(currentVariant, currentPart).length +
+      ' in this review.';
+    return;
+  }
+
   activeVariantNote.textContent =
     'Active stage: ' + variantNames[currentVariant] +
     '. Mastered ' +
-    (mastery[currentVariant].part1.length + mastery[currentVariant].part2.length) +
+    getSavedCompletedCountForVariant(currentVariant) +
     ' of ' +
     (getSymbolsFor(currentVariant, 1).length + getSymbolsFor(currentVariant, 2).length) +
     ' letters.';
@@ -359,9 +398,18 @@ function buildVariantButtons() {
       currentPart = 1;
       gameStarted = false;
       target = null;
+
+      if (isVariantComplete(variantIndex)) {
+        startReviewSession(variantIndex);
+        messageEl.textContent = 'Opened ' + variantNames[variantIndex] + ' for review.';
+        helperNoteEl.textContent = 'This review will play all sounds in Part 1, then Part 2.';
+      } else {
+        clearReviewSession();
+        messageEl.textContent = 'Opened ' + variantNames[variantIndex] + '.';
+        helperNoteEl.textContent = 'A sound will play now.';
+      }
+
       render();
-      messageEl.textContent = 'Opened ' + variantNames[variantIndex] + '.';
-      helperNoteEl.textContent = 'Reviewing ' + variantNames[variantIndex] + '. A sound will play now.';
       setTimeout(() => chooseAndPlayNext(currentVariant, currentPart), 80);
     });
     variantGrid.appendChild(btn);
@@ -396,7 +444,7 @@ function render() {
 
 function chooseAndPlayNext(variantIndex = currentVariant, part = currentPart) {
   const letters = getSymbolsFor(variantIndex, part);
-  const mastered = getMasteryFor(variantIndex, part);
+  const progress = getProgressFor(variantIndex, part);
   const pool = letters.filter((symbol) => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim());
 
   if (!pool.length) {
@@ -413,7 +461,7 @@ function chooseAndPlayNext(variantIndex = currentVariant, part = currentPart) {
   hidePartFinishedBanner();
   clearLetterStates();
 
-  const remaining = pool.filter((symbol) => !mastered.includes(symbol));
+  const remaining = pool.filter((symbol) => !progress.includes(symbol));
   const candidates = remaining.length ? remaining : pool;
   target = candidates[Math.floor(Math.random() * candidates.length)];
   gameStarted = true;
@@ -432,7 +480,9 @@ function chooseAndPlayNext(variantIndex = currentVariant, part = currentPart) {
     messageEl.textContent = 'Now tap the matching letter.';
   }, 220);
 
-  saveProgress();
+  if (!isReviewingVariant(variantIndex)) {
+    saveProgress();
+  }
 }
 
 async function loadSounds() {
@@ -475,6 +525,9 @@ function handleGuess(symbol, button) {
     return;
   }
 
+  const inReview = isReviewingVariant(currentVariant);
+  const progressList = getProgressFor(currentVariant, currentPart);
+
   rounds += 1;
   clearLetterStates();
 
@@ -482,15 +535,26 @@ function handleGuess(symbol, button) {
     score += 1;
     button.classList.add('correct');
 
-    const masteryList = getMasteryFor(currentVariant, currentPart);
-    if (!masteryList.includes(symbol)) masteryList.push(symbol);
+    if (!progressList.includes(symbol)) {
+      progressList.push(symbol);
+    }
+
+    if (!inReview) {
+      const savedMastery = getMasteryFor(currentVariant, currentPart);
+      if (!savedMastery.includes(symbol)) {
+        savedMastery.push(symbol);
+      }
+    }
 
     playCorrectChime();
     updateStats();
     updateStageNote();
-    saveProgress();
 
-    const partComplete = masteryList.length === getSymbolsFor(currentVariant, currentPart).length;
+    if (!inReview) {
+      saveProgress();
+    }
+
+    const partComplete = progressList.length === getSymbolsFor(currentVariant, currentPart).length;
 
     if (partComplete) {
       gameStarted = false;
@@ -499,7 +563,11 @@ function handleGuess(symbol, button) {
       if (currentPart === 1) {
         currentPart = 2;
         render();
-        saveProgress();
+
+        if (!inReview) {
+          saveProgress();
+        }
+
         setMessageTone('success');
         setRevealState('idle', 'Next set');
         messageEl.textContent = 'Great! Here comes the next set.';
@@ -508,7 +576,30 @@ function handleGuess(symbol, button) {
         return;
       }
 
+      if (inReview) {
+        showPartFinishedBanner('✅ Review complete!');
+
+        const highestUnlocked = getHighestUnlockedVariant();
+        const nextVariant = Math.min(highestUnlocked, currentVariant + 1);
+        const hasNextAvailable = nextVariant !== currentVariant;
+
+        showCelebration({
+          title: '🎉 Review Complete! 🎉',
+          text: hasNextAvailable
+            ? 'You finished reviewing ' + variantNames[currentVariant] + '. Next, continue with ' + variantNames[nextVariant] + '.'
+            : 'You finished reviewing all sounds in ' + variantNames[currentVariant] + '.',
+          badge: '🌟 Great Job! 🌟',
+          continueLabel: hasNextAvailable ? 'Open ' + variantNames[nextVariant] : 'Continue',
+          action: hasNextAvailable ? 'next-after-review' : 'end-review',
+          nextVariantIndex: hasNextAvailable ? nextVariant : null,
+          final: false,
+          voiceText: 'Great job! Review complete.'
+        });
+        return;
+      }
+
       const variantDone = isVariantComplete(currentVariant);
+
       if (variantDone && currentVariant < variantNames.length - 1) {
         showPartFinishedBanner('ሀብሮም! ዕልልልል!');
         showCelebration({
@@ -519,7 +610,6 @@ function handleGuess(symbol, button) {
           action: 'next-variant',
           final: false,
           voiceText: 'ሀብሮም!',
-          // word: 'ሀብሮም! ዕልልልል!',
           useOnlyAudioFile: true
         });
         setTimeout(() => {
@@ -538,7 +628,6 @@ function handleGuess(symbol, button) {
           action: 'restart',
           final: true,
           voiceText: 'ሀብሮም!',
-          // word: 'ሀብሮም! ዕልልልል!',
           useOnlyAudioFile: true
         });
         setTimeout(() => {
@@ -562,9 +651,17 @@ function handleGuess(symbol, button) {
     setReplayButtonState('attention');
     updateStats();
     updateStageNote();
-    saveProgress();
+
+    if (!inReview) {
+      saveProgress();
+    }
+
     messageEl.textContent = 'Almost! Listen again and try once more.';
-    helperNoteEl.textContent = 'You are still working in ' + variantNames[currentVariant] + '.';
+    helperNoteEl.textContent =
+      inReview
+        ? 'You are reviewing ' + variantNames[currentVariant] + ' — Part ' + currentPart + '.'
+        : 'You are still working in ' + variantNames[currentVariant] + '.';
+
     setTimeout(() => playSound(target), 260);
   }
 }
@@ -610,10 +707,13 @@ function resetProgress() {
   currentVariant = 0;
   currentPart = 1;
   mastery = makeEmptyMastery();
+  clearReviewSession();
   hideCelebration();
+
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch (e) {}
+
   render();
   setMessageTone('info');
   setRevealState('idle', 'Fresh start');
@@ -646,6 +746,7 @@ function loadSavedProgressIntoState() {
       mastery = makeEmptyMastery();
     }
 
+    clearReviewSession();
     return true;
   } catch {
     return false;
@@ -654,9 +755,11 @@ function loadSavedProgressIntoState() {
 
 function handleCelebrationContinue() {
   const action = celebration && celebration.action;
+  const nextVariantIndex = celebration && celebration.nextVariantIndex;
   hideCelebration();
 
   if (action === 'next-variant') {
+    clearReviewSession();
     currentVariant += 1;
     currentPart = 1;
     render();
@@ -667,6 +770,26 @@ function handleCelebrationContinue() {
     return;
   }
 
+  if (action === 'next-after-review' && typeof nextVariantIndex === 'number') {
+    clearReviewSession();
+    currentVariant = nextVariantIndex;
+    currentPart = 1;
+    render();
+    messageEl.textContent = 'Now opening ' + variantNames[currentVariant] + '.';
+    helperNoteEl.textContent = 'Let us continue with ' + variantNames[currentVariant] + '.';
+    setTimeout(() => chooseAndPlayNext(currentVariant, 1), 100);
+    return;
+  }
+
+  if (action === 'end-review') {
+    clearReviewSession();
+    currentPart = 1;
+    render();
+    messageEl.textContent = 'Review finished for ' + variantNames[currentVariant] + '.';
+    helperNoteEl.textContent = 'Tap Play / ንስማዕ to review again, or open another variant.';
+    return;
+  }
+
   if (action === 'restart') {
     resetProgress();
   }
@@ -674,6 +797,7 @@ function handleCelebrationContinue() {
 
 async function handleIntroStart() {
   introOverlay.style.display = 'none';
+  clearReviewSession();
   const ok = await loadSounds();
   currentVariant = 0;
   currentPart = 1;
@@ -689,15 +813,19 @@ async function handleContinueStart() {
   const restored = loadSavedProgressIntoState();
   introOverlay.style.display = 'none';
   const ok = await loadSounds();
+
   if (!restored) {
     currentVariant = 0;
     currentPart = 1;
+    clearReviewSession();
   }
+
   render();
   setMessageTone('info');
   setRevealState('idle', 'Welcome back');
   setReplayButtonState('ready');
   saveProgress();
+
   if (ok) {
     messageEl.textContent = 'Welcome back! Continuing from ' + variantNames[currentVariant] + '.';
     helperNoteEl.textContent = 'Your saved progress has been restored.';
