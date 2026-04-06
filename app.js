@@ -1,854 +1,1077 @@
-const STORAGE_KEY = 'geez-fidelat-progress-v10';
+import { VARIANT_NAMES } from './src/data/fidelat-data.js';
+import { ProgressStore } from './src/core/progress-store.js';
+import { AlphabetExplorerFeature } from './src/features/alphabet-explorer.js';
+import { DragDropFeature } from './src/features/drag-drop.js';
+import { ListenMatchFeature } from './src/features/listen-match.js';
+import { AudioService } from './src/services/audio-service.js';
+import { StorageService } from './src/services/storage-service.js';
+import { THEME_OPTIONS, getThemeOption } from './src/services/theme-service.js';
 
-const variantNames = ['ግእዝ', 'ካዕብ', 'ሣልስ', 'ራብዕ', 'ኀምስ', 'ሳድስ', 'ሳብዕ'];
-
-const primaryRows = [
-  ['ሀ','ሁ','ሂ','ሃ','ሄ','ህ','ሆ'],
-  ['ለ','ሉ','ሊ','ላ','ሌ','ል','ሎ'],
-  ['ሐ','ሑ','ሒ','ሓ','ሔ','ሕ','ሖ'],
-  ['መ','ሙ','ሚ','ማ','ሜ','ም','ሞ'],
-  ['ሰ','ሱ','ሲ','ሳ','ሴ','ስ','ሶ'],
-  ['ረ','ሩ','ሪ','ራ','ሬ','ር','ሮ'],
-  ['ሸ','ሹ','ሺ','ሻ','ሼ','ሽ','ሾ'],
-  ['ቀ','ቁ','ቂ','ቃ','ቄ','ቅ','ቆ'],
-  ['በ','ቡ','ቢ','ባ','ቤ','ብ','ቦ'],
-  ['ተ','ቱ','ቲ','ታ','ቴ','ት','ቶ'],
-  ['ነ','ኑ','ኒ','ና','ኔ','ን','ኖ'],
-  ['አ','ኡ','ኢ','ኣ','ኤ','እ','ኦ'],
-  ['ከ','ኩ','ኪ','ካ','ኬ','ክ','ኮ'],
-  ['ጸ','ጹ','ጺ','ጻ','ጼ','ጽ','ጾ']
-];
-
-const secondaryRows = [
-  ['ሠ','ሡ','ሢ','ሣ','ሤ','ሥ','ሦ'],
-  ['ኀ','ኁ','ኂ','ኃ','ኄ','ኅ','ኆ'],
-  ['ፀ','ፁ','ፂ','ፃ','ፄ','ፅ','ፆ'],
-  ['ዘ','ዙ','ዚ','ዛ','ዜ','ዝ','ዞ'],
-  ['ዠ','ዡ','ዢ','ዣ','ዤ','ዥ','ዦ'],
-  ['የ','ዩ','ዪ','ያ','ዬ','ይ','ዮ'],
-  ['ደ','ዱ','ዲ','ዳ','ዴ','ድ','ዶ'],
-  ['ገ','ጉ','ጊ','ጋ','ጌ','ግ','ጎ'],
-  ['ጠ','ጡ','ጢ','ጣ','ጤ','ጥ','ጦ'],
-  ['ጨ','ጩ','ጪ','ጫ','ጬ','ጭ','ጮ'],
-  ['ወ','ዉ','ዊ','ዋ','ዌ','ው','ዎ'],
-  ['ዐ','ዑ','ዒ','ዓ','ዔ','ዕ','ዖ'],
-  ['ፈ','ፉ','ፊ','ፋ','ፌ','ፍ','ፎ']
-];
-
-function makeEmptyMastery() {
-  return variantNames.map(() => ({ part1: [], part2: [] }));
-}
-
-let currentVariant = 0;
-let currentPart = 1;
-let target = null;
-let score = 0;
-let rounds = 0;
-let gameStarted = false;
-let recordedAudio = {};
-let mastery = makeEmptyMastery();
-let currentAudio = null;
-let celebration = null;
-let reviewSession = null;
-
-const introOverlay = document.getElementById('introOverlay');
-const enterGameBtn = document.getElementById('enterGameBtn');
-const continueBtn = document.getElementById('continueBtn');
-
-const scoreEl = document.getElementById('score');
-const roundsEl = document.getElementById('rounds');
-const accuracyEl = document.getElementById('accuracy');
-const unlockedCountEl = document.getElementById('unlockedCount');
-const messageEl = document.getElementById('message');
-const helperNoteEl = document.getElementById('helperNote');
-const variantGrid = document.getElementById('variantGrid');
-const letterGrid = document.getElementById('letterGrid');
-const activeVariantNote = document.getElementById('activeVariantNote');
-const replayBtn = document.getElementById('replayBtn');
-const resetBtn = document.getElementById('resetBtn');
-const dangerZone = document.getElementById('dangerZone');
-
-const soundReveal = document.getElementById('soundReveal');
-const soundRevealText = document.getElementById('soundRevealText');
-const soundDots = document.getElementById('soundDots');
-const partFinishedBanner = document.getElementById('partFinishedBanner');
-const messageBox = document.getElementById('messageBox');
-
-const celebrationOverlay = document.getElementById('celebrationOverlay');
-const celebrationBadge = document.getElementById('celebrationBadge');
-const celebrationTitle = document.getElementById('celebrationTitle');
-const celebrationText = document.getElementById('celebrationText');
-const celebrationWord = document.getElementById('celebrationWord');
-const celebrationContinueBtn = document.getElementById('celebrationContinueBtn');
-const starsLayer = document.getElementById('starsLayer');
-
-function getSymbolsFor(variantIndex, part) {
-  const rows = part === 1 ? primaryRows : secondaryRows;
-  return rows.map((row) => row[variantIndex]).filter(Boolean);
-}
-
-function getMasteryFor(variantIndex, part) {
-  return part === 1 ? mastery[variantIndex].part1 : mastery[variantIndex].part2;
-}
-
-function visibleLetters() {
-  return getSymbolsFor(currentVariant, currentPart);
-}
-
-function activePlayable() {
-  return visibleLetters().filter((symbol) => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim());
-}
-
-function startReviewSession(variantIndex) {
-  reviewSession = {
-    variantIndex,
-    part1: [],
-    part2: []
-  };
-}
-
-function clearReviewSession() {
-  reviewSession = null;
-}
-
-function isReviewingVariant(variantIndex = currentVariant) {
-  return !!reviewSession && reviewSession.variantIndex === variantIndex;
-}
-
-function getProgressFor(variantIndex, part) {
-  if (isReviewingVariant(variantIndex)) {
-    return part === 1 ? reviewSession.part1 : reviewSession.part2;
-  }
-  return getMasteryFor(variantIndex, part);
-}
-
-function getSavedCompletedCountForVariant(variantIndex) {
-  return mastery[variantIndex].part1.length + mastery[variantIndex].part2.length;
-}
-
-function isVariantComplete(variantIndex) {
-  return (
-    mastery[variantIndex].part1.length === getSymbolsFor(variantIndex, 1).length &&
-    mastery[variantIndex].part2.length === getSymbolsFor(variantIndex, 2).length
-  );
-}
-
-function getHighestUnlockedVariant() {
-  let highest = 0;
-  for (let i = 0; i < variantNames.length - 1; i += 1) {
-    if (isVariantComplete(i)) highest = i + 1;
-    else break;
-  }
-  return highest;
-}
-
-function getVisibleVariantIndexes() {
-  const highestUnlocked = getHighestUnlockedVariant();
-  const list = [];
-  for (let i = 0; i <= highestUnlocked; i += 1) list.push(i);
-  return list;
-}
-
-function hasSavedProgress() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    return !!JSON.parse(raw);
-  } catch {
-    return false;
-  }
-}
-
-function updateContinueButton() {
-  continueBtn.style.display = hasSavedProgress() ? 'inline-flex' : 'none';
-}
-
-function updateDangerZoneVisibility() {
-  const shouldShow = getHighestUnlockedVariant() > 0 || currentVariant > 0;
-  dangerZone.style.display = shouldShow ? 'block' : 'none';
-}
-
-function updateStats() {
-  scoreEl.textContent = score;
-  roundsEl.textContent = rounds;
-  const accuracy = rounds === 0 ? 0 : Math.round((score / rounds) * 100);
-  accuracyEl.textContent = accuracy + '%';
-  unlockedCountEl.textContent = (getHighestUnlockedVariant() + 1) + '/7';
-}
-
-function updateStageNote() {
-  if (isReviewingVariant()) {
-    const progress = getProgressFor(currentVariant, currentPart);
-    activeVariantNote.textContent =
-      'Reviewing: ' + variantNames[currentVariant] +
-      ' — Part ' + currentPart +
-      '. Completed ' + progress.length +
-      ' of ' + getSymbolsFor(currentVariant, currentPart).length +
-      ' in this review.';
-    return;
+class FidelatApp {
+  constructor(root) {
+    this.root = root;
+    this.route = this.isAdminRoute() ? 'admin' : 'learner';
+    this.storage = new StorageService();
+    this.store = new ProgressStore(this.storage);
+    this.audio = new AudioService();
+    this.explorer = new AlphabetExplorerFeature(this.store, this.audio);
+    this.dragdrop = new DragDropFeature(this.store, this.audio);
+    this.challenge = new ListenMatchFeature(this.store, this.audio);
+    this.audioReady = false;
+    this.adminTab = 'copy';
+    this.banner = {
+      tone: 'info',
+      text: 'Loading your learning studio.'
+    };
   }
 
-  activeVariantNote.textContent =
-    'Active stage: ' + variantNames[currentVariant] +
-    '. Mastered ' +
-    getSavedCompletedCountForVariant(currentVariant) +
-    ' of ' +
-    (getSymbolsFor(currentVariant, 1).length + getSymbolsFor(currentVariant, 2).length) +
-    ' letters.';
-}
-
-function saveProgress() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      currentVariant,
-      currentPart,
-      score,
-      rounds,
-      mastery
-    }));
-  } catch (e) {}
-  updateContinueButton();
-}
-
-function setMessageTone(tone) {
-  messageBox.className = 'message-box ' + tone;
-}
-
-function setRevealState(mode, label) {
-  soundReveal.classList.remove('showing');
-  soundDots.style.display = 'none';
-
-  if (mode === 'showing') {
-    soundReveal.classList.add('showing');
-    soundDots.style.display = 'inline-flex';
+  isAdminRoute() {
+    const path = String(window.location.pathname || '').replace(/\\/g, '/').toLowerCase();
+    return /(^|\/)admin(\/|$)/.test(path);
   }
 
-  soundRevealText.textContent = label;
-}
-
-function setReplayButtonState(mode) {
-  replayBtn.classList.remove('ready', 'attention');
-  if (mode === 'ready') replayBtn.classList.add('ready');
-  if (mode === 'attention') replayBtn.classList.add('ready', 'attention');
-}
-
-function showPartFinishedBanner(text) {
-  partFinishedBanner.style.display = 'block';
-  partFinishedBanner.className = 'part-finished-banner';
-  partFinishedBanner.textContent = text;
-}
-
-function hidePartFinishedBanner() {
-  partFinishedBanner.style.display = 'none';
-  partFinishedBanner.textContent = '';
-}
-
-function speakCelebration(text) {
-  try {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.95;
-    utterance.pitch = 1.2;
-    utterance.volume = 1;
-    window.speechSynthesis.speak(utterance);
-  } catch (e) {}
-}
-
-function stopAudio() {
-  if (!currentAudio) return;
-  try {
-    currentAudio.pause();
-    currentAudio.currentTime = 0;
-  } catch (e) {}
-  currentAudio = null;
-}
-
-function playCorrectChime() {
-  try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
-    const now = ctx.currentTime;
-    [523.25, 659.25, 783.99].forEach((freq, index) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, now + index * 0.08);
-      gain.gain.setValueAtTime(0.0001, now + index * 0.08);
-      gain.gain.exponentialRampToValueAtTime(0.12, now + index * 0.08 + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.08 + 0.22);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now + index * 0.08);
-      osc.stop(now + index * 0.08 + 0.24);
-    });
-  } catch (e) {}
-}
-
-function playSound(symbol) {
-  if (!symbol) return;
-  stopAudio();
-  const path = recordedAudio[symbol];
-  if (!path) {
-    setMessageTone('error');
-    messageEl.textContent = 'No sound was found for this letter.';
-    helperNoteEl.textContent = 'This letter does not yet have an audio file.';
-    return;
-  }
-  const audio = new Audio(path);
-  currentAudio = audio;
-  audio.play().catch(() => {
-    setMessageTone('error');
-    messageEl.textContent = 'Sound playback was blocked or the file path is not reachable.';
-    helperNoteEl.textContent = 'Check browser audio permissions and the file path.';
-  });
-}
-
-function playVariantUnlockSound() {
-  try {
-    const audio = new Audio('audio/variant-unlock.mp3');
-    currentAudio = audio;
-    audio.play().catch(() => {});
-  } catch (e) {}
-}
-
-function playFinalCelebrationSound() {
-  try {
-    const audio = new Audio('audio/final-celebration.mp3');
-    currentAudio = audio;
-    audio.play().catch(() => {});
-  } catch (e) {}
-}
-
-function launchStars() {
-  starsLayer.innerHTML = '';
-  const icons = ['⭐', '🌟', '✨', '🎉'];
-  for (let i = 0; i < 18; i += 1) {
-    const star = document.createElement('div');
-    star.className = 'star-burst';
-    star.textContent = icons[i % icons.length];
-    star.style.left = (8 + Math.random() * 84) + '%';
-    star.style.bottom = (10 + Math.random() * 12) + '%';
-    star.style.animationDelay = (Math.random() * 0.22) + 's';
-    star.style.fontSize = (1.2 + Math.random() * 1.2) + 'rem';
-    starsLayer.appendChild(star);
+  getRootUrl() {
+    return new URL(this.route === 'admin' ? '../' : './', window.location.href).href;
   }
 
-  const confettiColors = ['#ff6b6b', '#ffd93d', '#6bcB77', '#4d96ff', '#c77dff', '#ff8fab'];
-  for (let i = 0; i < 24; i += 1) {
-    const piece = document.createElement('div');
-    piece.className = 'confetti-piece';
-    piece.style.left = (4 + Math.random() * 92) + '%';
-    piece.style.top = (-10 - Math.random() * 25) + 'px';
-    piece.style.background = confettiColors[i % confettiColors.length];
-    piece.style.animationDelay = (Math.random() * 0.35) + 's';
-    piece.style.transform = 'rotate(' + Math.round(Math.random() * 180) + 'deg)';
-    starsLayer.appendChild(piece);
-  }
-}
-
-function showCelebration(data) {
-  celebration = data;
-  celebrationBadge.textContent = data.badge;
-  celebrationTitle.textContent = data.title;
-  celebrationText.textContent = data.text;
-  celebrationContinueBtn.textContent = data.continueLabel;
-
-  if (data.word) {
-    celebrationWord.style.display = 'block';
-    celebrationWord.textContent = data.word;
-  } else {
-    celebrationWord.style.display = 'none';
-    celebrationWord.textContent = '';
+  getAdminUrl() {
+    return new URL('admin/', this.getRootUrl()).href;
   }
 
-  setMessageTone('celebrate');
-  setRevealState('idle', 'Celebration!');
-  setReplayButtonState('ready');
-  celebrationOverlay.style.display = 'flex';
-  launchStars();
-
-  if (!data.useOnlyAudioFile) {
-    speakCelebration(data.voiceText || data.title);
+  goToLearnerUrl() {
+    window.location.href = this.getRootUrl();
   }
-}
 
-function hideCelebration() {
-  celebration = null;
-  celebrationOverlay.style.display = 'none';
-  starsLayer.innerHTML = '';
-  celebrationWord.style.display = 'none';
-  celebrationWord.textContent = '';
-}
+  goToAdminUrl() {
+    window.location.href = this.getAdminUrl();
+  }
 
-function buildVariantButtons() {
-  variantGrid.innerHTML = '';
-  const visibleIndexes = getVisibleVariantIndexes();
+  async init() {
+    this.attachEvents();
+    this.render();
 
-  visibleIndexes.forEach((variantIndex) => {
-    const btn = document.createElement('button');
-    btn.className = 'variant-btn';
-    if (isVariantComplete(variantIndex)) btn.classList.add('complete');
-    if (variantIndex === currentVariant) btn.classList.add('active');
-    btn.type = 'button';
-    btn.textContent = variantNames[variantIndex];
-    btn.addEventListener('click', () => {
-      currentVariant = variantIndex;
-      currentPart = 1;
-      gameStarted = false;
-      target = null;
-
-      if (isVariantComplete(variantIndex)) {
-        startReviewSession(variantIndex);
-        messageEl.textContent = 'Opened ' + variantNames[variantIndex] + ' for review.';
-        helperNoteEl.textContent = 'This review will play all sounds in Part 1, then Part 2.';
+    try {
+      await this.audio.loadAudioMap();
+      this.audioReady = true;
+      if (this.route === 'admin') {
+        this.setBanner('success', this.store.isAdminAuthenticated()
+          ? 'Sounds loaded. Admin controls are ready.'
+          : 'Sounds loaded. Log in on this admin page to continue.');
       } else {
-        clearReviewSession();
-        messageEl.textContent = 'Opened ' + variantNames[variantIndex] + '.';
-        helperNoteEl.textContent = 'A sound will play now.';
+        this.setBanner('success', this.store.hasActiveProfile()
+          ? 'Sounds loaded. Continue with the learner menu above.'
+          : 'Sounds loaded. Create an account, log in, or continue locally to begin.');
       }
+    } catch (error) {
+      this.audioReady = false;
+      this.setBanner('error', error.message || 'Audio files could not be loaded.');
+    }
 
-      render();
-      setTimeout(() => chooseAndPlayNext(currentVariant, currentPart), 80);
+    this.render();
+  }
+
+  attachEvents() {
+    this.root.addEventListener('click', (event) => this.handleClick(event));
+    this.root.addEventListener('change', (event) => this.handleChange(event));
+    this.root.addEventListener('submit', (event) => this.handleSubmit(event));
+    this.root.addEventListener('dragstart', (event) => this.handleDragStart(event));
+    this.root.addEventListener('dragover', (event) => this.handleDragOver(event));
+    this.root.addEventListener('drop', (event) => this.handleDrop(event));
+  }
+
+  getLearnerTypeLabel(profile) {
+    return this.store.getText('labels.learnerType', {}, profile);
+  }
+
+  getCurrentViewTitle() {
+    const activeProfile = this.route === 'admin' ? null : this.store.getActiveProfile();
+    if (this.route === 'admin') return this.store.getText('admin.title', {}, null);
+    if (!activeProfile) return this.store.getText('menu.brandTitle', {}, null);
+
+    const activeView = this.store.getProgress().activeView;
+    if (activeView === 'explorer') return this.store.getText('explorer.title', {}, activeProfile);
+    if (activeView === 'dragdrop') return this.store.getText('dragdrop.title', {}, activeProfile);
+    if (activeView === 'challenge') return this.store.getText('challenge.title', {}, activeProfile);
+    return this.store.getText('home.welcomeTitle', { name: activeProfile.name }, activeProfile);
+  }
+
+  updateDocumentTitle() {
+    const brand = this.store.getText('menu.brandEyebrow', {}, null) || 'Fidelat House';
+    document.title = `${this.getCurrentViewTitle()} | ${brand}`;
+  }
+
+  escapeAttribute(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  escapeTextarea(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  formatTimestamp(value) {
+    if (!value) return 'Never';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'Unknown';
+    return date.toLocaleString(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short'
     });
-    variantGrid.appendChild(btn);
-  });
-}
-
-function buildLetterButtons() {
-  letterGrid.innerHTML = '';
-  visibleLetters().forEach((symbol) => {
-    const btn = document.createElement('button');
-    btn.className = 'letter-btn';
-    btn.type = 'button';
-    btn.textContent = symbol;
-    btn.addEventListener('click', () => handleGuess(symbol, btn));
-    letterGrid.appendChild(btn);
-  });
-}
-
-function clearLetterStates() {
-  document.querySelectorAll('.letter-btn').forEach((btn) => {
-    btn.classList.remove('correct', 'wrong');
-  });
-}
-
-function render() {
-  buildVariantButtons();
-  buildLetterButtons();
-  updateStats();
-  updateStageNote();
-  updateDangerZoneVisibility();
-}
-
-function chooseAndPlayNext(variantIndex = currentVariant, part = currentPart) {
-  const letters = getSymbolsFor(variantIndex, part);
-  const progress = getProgressFor(variantIndex, part);
-  const pool = letters.filter((symbol) => typeof recordedAudio[symbol] === 'string' && recordedAudio[symbol].trim());
-
-  if (!pool.length) {
-    target = null;
-    gameStarted = false;
-    setMessageTone('error');
-    setRevealState('idle', 'No sound');
-    setReplayButtonState('ready');
-    messageEl.textContent = 'This stage has no playable sounds yet.';
-    helperNoteEl.textContent = 'Add audio files for this stage, then press Play / ንስማዕ.';
-    return;
   }
 
-  hidePartFinishedBanner();
-  clearLetterStates();
-
-  const remaining = pool.filter((symbol) => !progress.includes(symbol));
-  const candidates = remaining.length ? remaining : pool;
-  target = candidates[Math.floor(Math.random() * candidates.length)];
-  gameStarted = true;
-
-  setMessageTone('info');
-  setRevealState('showing', 'Showing sound...');
-  setReplayButtonState('attention');
-  messageEl.textContent = 'Listen carefully. A new sound is being played.';
-  helperNoteEl.textContent = 'After listening, tap the matching letter.';
-
-  setTimeout(() => {
-    playSound(target);
-    setRevealState('idle', 'Listen again - ድገምያ');
-    setReplayButtonState('ready');
-    setMessageTone('info');
-    messageEl.textContent = 'Now tap the matching letter.';
-  }, 220);
-
-  if (!isReviewingVariant(variantIndex)) {
-    saveProgress();
+  setBanner(tone, text) {
+    this.banner = { tone, text };
+    this.render();
   }
-}
 
-async function loadSounds() {
-  try {
-    const response = await fetch('sounds.json', { cache: 'no-store' });
-    if (!response.ok) throw new Error('Could not load sounds.json');
-    const data = await response.json();
-    const resolvedMap = data.symbols && typeof data.symbols === 'object' ? data.symbols : data;
-    const usableEntries = Object.entries(resolvedMap).filter(([, value]) => typeof value === 'string' && value.trim());
-    recordedAudio = Object.fromEntries(usableEntries);
-
-    if (!usableEntries.length) {
-      setMessageTone('error');
-      messageEl.textContent = 'sounds.json loaded, but it does not contain any usable sound paths yet.';
-      helperNoteEl.textContent = 'Add entries like "ሀ": "audio/ሀ.mp3".';
-      return false;
+  async openView(view, options = {}) {
+    if (view === 'admin') {
+      this.goToAdminUrl();
+      return;
     }
 
-    helperNoteEl.textContent = 'Sounds loaded! The first sound will play now.';
-    return true;
-  } catch (e) {
-    recordedAudio = {};
-    setMessageTone('error');
-    messageEl.textContent = 'The page could not load sounds.json.';
-    helperNoteEl.textContent = 'Keep sounds.json beside this HTML file and make sure it contains valid audio paths.';
-    return false;
-  }
-}
-
-function handleGuess(symbol, button) {
-  if (!gameStarted || !target) {
-    messageEl.textContent = 'Tap Play / ንስማዕ to begin.';
-    return;
-  }
-
-  if (!activePlayable().includes(symbol)) {
-    setMessageTone('error');
-    messageEl.textContent = 'This letter does not have a recorded sound yet.';
-    helperNoteEl.textContent = 'Use letters with audio in the open stage, or add the missing sound file.';
-    return;
-  }
-
-  const inReview = isReviewingVariant(currentVariant);
-  const progressList = getProgressFor(currentVariant, currentPart);
-
-  rounds += 1;
-  clearLetterStates();
-
-  if (symbol === target) {
-    score += 1;
-    button.classList.add('correct');
-
-    if (!progressList.includes(symbol)) {
-      progressList.push(symbol);
+    if (this.route === 'admin') {
+      this.setBanner('error', 'Use the learner page to open learner activities.');
+      return;
     }
 
-    if (!inReview) {
-      const savedMastery = getMasteryFor(currentVariant, currentPart);
-      if (!savedMastery.includes(symbol)) {
-        savedMastery.push(symbol);
-      }
+    if (!this.store.hasActiveProfile()) {
+      this.setBanner('error', 'Create an account, log in, or continue locally before opening learner activities.');
+      return;
     }
 
-    playCorrectChime();
-    updateStats();
-    updateStageNote();
+    this.store.setActiveView(view);
 
-    if (!inReview) {
-      saveProgress();
-    }
-
-    const partComplete = progressList.length === getSymbolsFor(currentVariant, currentPart).length;
-
-    if (partComplete) {
-      gameStarted = false;
-      target = null;
-
-      if (currentPart === 1) {
-        currentPart = 2;
-        render();
-
-        if (!inReview) {
-          saveProgress();
-        }
-
-        setMessageTone('success');
-        setRevealState('idle', 'Next set');
-        messageEl.textContent = 'Great! Here comes the next set.';
-        helperNoteEl.textContent = 'Listen for the next sound.';
-        setTimeout(() => chooseAndPlayNext(currentVariant, 2), 500);
-        return;
-      }
-
-      if (inReview) {
-        showPartFinishedBanner('✅ Review complete!');
-
-        const highestUnlocked = getHighestUnlockedVariant();
-        const nextVariant = Math.min(highestUnlocked, currentVariant + 1);
-        const hasNextAvailable = nextVariant !== currentVariant;
-
-        showCelebration({
-          title: '🎉 Review Complete! 🎉',
-          text: hasNextAvailable
-            ? 'You finished reviewing ' + variantNames[currentVariant] + '. Next, continue with ' + variantNames[nextVariant] + '.'
-            : 'You finished reviewing all sounds in ' + variantNames[currentVariant] + '.',
-          badge: '🌟 Great Job! 🌟',
-          continueLabel: hasNextAvailable ? 'Open ' + variantNames[nextVariant] : 'Continue',
-          action: hasNextAvailable ? 'next-after-review' : 'end-review',
-          nextVariantIndex: hasNextAvailable ? nextVariant : null,
-          final: false,
-          voiceText: 'Great job! Review complete.'
-        });
-        return;
-      }
-
-      const variantDone = isVariantComplete(currentVariant);
-
-      if (variantDone && currentVariant < variantNames.length - 1) {
-        showPartFinishedBanner('ሀብሮም! ዕልልልል!');
-        showCelebration({
-          title: 'ዕልልልል!',
-          text: variantNames[currentVariant + 1] + ' is now ready.',
-          badge: '🌟 ሀብሮም! 🌟',
-          continueLabel: 'Play ' + variantNames[currentVariant + 1],
-          action: 'next-variant',
-          final: false,
-          voiceText: 'ሀብሮም!',
-          useOnlyAudioFile: true
-        });
-        setTimeout(() => {
-          playVariantUnlockSound();
-        }, 150);
-        return;
-      }
-
-      if (variantDone && currentVariant === variantNames.length - 1) {
-        showPartFinishedBanner('🏆 All variants complete!');
-        showCelebration({
-          title: 'ዕልልልል!',
-          text: 'ሀብሮም! You completed all seven variants.',
-          badge: '🎊 ሀብሮም! 🎊',
-          continueLabel: 'Play Again',
-          action: 'restart',
-          final: true,
-          voiceText: 'ሀብሮም!',
-          useOnlyAudioFile: true
-        });
-        setTimeout(() => {
-          playFinalCelebrationSound();
-        }, 300);
+    if (view === 'challenge' && options.autoStart) {
+      const { challenge } = this.store.getProgress();
+      if (!challenge.targetSymbol && !challenge.unlockReadyVariantIndex && !challenge.courseCompleted) {
+        await this.requireAudio(() => this.challenge.startRound(true));
+        this.setBanner('info', 'The first challenge started. Listen and choose the matching symbol.');
         return;
       }
     }
 
-    setMessageTone('success');
-    setRevealState('idle', 'Correct!');
-    messageEl.textContent = 'Wonderful! Here comes the next sound.';
-    setTimeout(() => {
-      clearLetterStates();
-      chooseAndPlayNext();
-    }, 900);
-  } else {
-    button.classList.add('wrong');
-    setMessageTone('error');
-    setRevealState('idle', 'Listen again - ድገምያ');
-    setReplayButtonState('attention');
-    updateStats();
-    updateStageNote();
+    this.render();
+  }
 
-    if (!inReview) {
-      saveProgress();
+  handleChange(event) {
+    const action = event.target.dataset.action;
+    if (action === 'theme-select') {
+      this.store.setTheme(event.target.value);
+      this.render();
+      return;
     }
 
-    messageEl.textContent = 'Almost! Listen again and try once more.';
-    helperNoteEl.textContent =
-      inReview
-        ? 'You are reviewing ' + variantNames[currentVariant] + ' — Part ' + currentPart + '.'
-        : 'You are still working in ' + variantNames[currentVariant] + '.';
-
-    setTimeout(() => playSound(target), 260);
-  }
-}
-
-function handleReplay() {
-  if (!activePlayable().length) {
-    setMessageTone('error');
-    setRevealState('idle', 'No sound');
-    messageEl.textContent = 'This stage has no playable sounds yet.';
-    helperNoteEl.textContent = 'Check your audio files for the open stage.';
-    return;
-  }
-
-  if (!target || !gameStarted || !activePlayable().includes(target)) {
-    chooseAndPlayNext();
-    return;
-  }
-
-  setRevealState('showing', 'Playing again...');
-  setReplayButtonState('attention');
-  setMessageTone('info');
-
-  setTimeout(() => {
-    playSound(target);
-    setRevealState('idle', 'Listen again - ድገምያ');
-    setReplayButtonState('ready');
-    messageEl.textContent = 'Listen again, then tap the matching letter.';
-  }, 120);
-}
-
-function confirmAndReset() {
-  const ok = window.confirm('Delete saved progress on this device and start again from ግእዝ?');
-  if (!ok) return false;
-  resetProgress();
-  return true;
-}
-
-function resetProgress() {
-  score = 0;
-  rounds = 0;
-  target = null;
-  gameStarted = false;
-  currentVariant = 0;
-  currentPart = 1;
-  mastery = makeEmptyMastery();
-  clearReviewSession();
-  hideCelebration();
-
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (e) {}
-
-  render();
-  setMessageTone('info');
-  setRevealState('idle', 'Fresh start');
-  setReplayButtonState('ready');
-  hidePartFinishedBanner();
-  messageEl.textContent = 'Fresh start ready. Tap Play / ንስማዕ to begin with ግእዝ.';
-  helperNoteEl.textContent = 'Only ግእዝ is open now.';
-  updateContinueButton();
-  updateDangerZoneVisibility();
-}
-
-function loadSavedProgressIntoState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    const parsed = JSON.parse(raw);
-    if (!parsed) return false;
-
-    currentVariant = typeof parsed.currentVariant === 'number' ? parsed.currentVariant : 0;
-    currentPart = parsed.currentPart === 2 ? 2 : 1;
-    score = typeof parsed.score === 'number' ? parsed.score : 0;
-    rounds = typeof parsed.rounds === 'number' ? parsed.rounds : 0;
-
-    if (Array.isArray(parsed.mastery) && parsed.mastery.length === variantNames.length) {
-      mastery = parsed.mastery.map((item) => ({
-        part1: Array.isArray(item.part1) ? item.part1 : [],
-        part2: Array.isArray(item.part2) ? item.part2 : []
-      }));
-    } else {
-      mastery = makeEmptyMastery();
+    if (action === 'explorer-variant') {
+      const part = this.explorer.selectVariant(Number(event.target.value));
+      this.setBanner('info', `Explorer moved to ${part === 2 ? 'part 2' : 'part 1'}. Press any symbol to hear it.`);
     }
-
-    clearReviewSession();
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function handleCelebrationContinue() {
-  const action = celebration && celebration.action;
-  const nextVariantIndex = celebration && celebration.nextVariantIndex;
-  hideCelebration();
-
-  if (action === 'next-variant') {
-    clearReviewSession();
-    currentVariant += 1;
-    currentPart = 1;
-    render();
-    saveProgress();
-    messageEl.textContent = 'Great! ' + variantNames[currentVariant] + ' is ready.';
-    helperNoteEl.textContent = 'Let us begin ' + variantNames[currentVariant] + '.';
-    setTimeout(() => chooseAndPlayNext(currentVariant, 1), 100);
-    return;
   }
 
-  if (action === 'next-after-review' && typeof nextVariantIndex === 'number') {
-    clearReviewSession();
-    currentVariant = nextVariantIndex;
-    currentPart = 1;
-    render();
-    messageEl.textContent = 'Now opening ' + variantNames[currentVariant] + '.';
-    helperNoteEl.textContent = 'Let us continue with ' + variantNames[currentVariant] + '.';
-    setTimeout(() => chooseAndPlayNext(currentVariant, 1), 100);
-    return;
+  buildCopyPatch(formData) {
+    const patch = {};
+    this.store.getCopySections().forEach((section) => {
+      section.fields.forEach((field) => {
+        patch[field.key] = {
+          default: String(formData.get(`${field.key}:default`) ?? '').trim(),
+          female: field.gendered ? String(formData.get(`${field.key}:female`) ?? '').trim() : '',
+          male: field.gendered ? String(formData.get(`${field.key}:male`) ?? '').trim() : ''
+        };
+      });
+    });
+    return patch;
   }
 
-  if (action === 'end-review') {
-    clearReviewSession();
-    currentPart = 1;
-    render();
-    messageEl.textContent = 'Review finished for ' + variantNames[currentVariant] + '.';
-    helperNoteEl.textContent = 'Tap Play / ንስማዕ to review again, or open another variant.';
-    return;
-  }
+  async handleSubmit(event) {
+    const form = event.target;
+    const action = form.dataset.action;
+    if (!action) return;
 
-  if (action === 'restart') {
-    resetProgress();
-  }
-}
-
-async function handleIntroStart() {
-  introOverlay.style.display = 'none';
-  clearReviewSession();
-  const ok = await loadSounds();
-  currentVariant = 0;
-  currentPart = 1;
-  render();
-  setMessageTone('info');
-  setRevealState('idle', 'Starting');
-  setReplayButtonState('ready');
-  saveProgress();
-  if (ok) setTimeout(() => chooseAndPlayNext(0, 1), 100);
-}
-
-async function handleContinueStart() {
-  const restored = loadSavedProgressIntoState();
-  introOverlay.style.display = 'none';
-  const ok = await loadSounds();
-
-  if (!restored) {
-    currentVariant = 0;
-    currentPart = 1;
-    clearReviewSession();
-  }
-
-  render();
-  setMessageTone('info');
-  setRevealState('idle', 'Welcome back');
-  setReplayButtonState('ready');
-  saveProgress();
-
-  if (ok) {
-    messageEl.textContent = 'Welcome back! Continuing from ' + variantNames[currentVariant] + '.';
-    helperNoteEl.textContent = 'Your saved progress has been restored.';
-    setTimeout(() => chooseAndPlayNext(currentVariant, currentPart), 120);
-  }
-}
-
-enterGameBtn.addEventListener('click', handleIntroStart);
-continueBtn.addEventListener('click', handleContinueStart);
-replayBtn.addEventListener('click', handleReplay);
-soundReveal.addEventListener('click', handleReplay);
-soundReveal.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault();
-    handleReplay();
-  }
-});
-resetBtn.addEventListener('click', confirmAndReset);
-celebrationContinueBtn.addEventListener('click', handleCelebrationContinue);
+    const data = new FormData(form);
 
-render();
-updateContinueButton();
-updateDangerZoneVisibility();
-setMessageTone('info');
-setRevealState('idle', 'Listen again - ድገምያ');
-setReplayButtonState('ready');
+    try {
+      if (action === 'register-form') {
+        this.store.registerProfile(data.get('name'), data.get('email'), data.get('pin'), data.get('sex'));
+        const profile = this.store.getActiveProfile();
+        this.setBanner('success', this.store.getText('system.profileCreated', { name: profile.name }, profile));
+        return;
+      }
+
+      if (action === 'login-form') {
+        this.store.loginProfile(data.get('profileId'), data.get('pin'));
+        const profile = this.store.getActiveProfile();
+        this.setBanner('success', this.store.getText('system.loginRestored', { name: profile.name }, profile));
+        return;
+      }
+
+      if (action === 'guest-form') {
+        this.store.continueAsGuest(data.get('name'), data.get('sex'));
+        const profile = this.store.getActiveProfile();
+        this.setBanner('success', this.store.getText('system.guestStarted', { name: profile.name }, profile));
+        return;
+      }
+
+      if (action === 'admin-setup-form') {
+        this.audio.stop();
+        this.store.setupAdmin(data.get('pin'));
+        this.adminTab = 'copy';
+        this.setBanner('success', 'Administrator access is ready on this device.');
+        return;
+      }
+
+      if (action === 'admin-login-form') {
+        this.audio.stop();
+        this.store.loginAdmin(data.get('pin'));
+        this.adminTab = 'copy';
+        this.setBanner('success', 'Administrator access restored.');
+        return;
+      }
+
+      if (action === 'admin-copy-form') {
+        this.store.updateAdminCopy(this.buildCopyPatch(data));
+        this.setBanner('success', 'Page text updated. Learners will see the new wording immediately on this device.');
+        return;
+      }
+
+      if (action === 'admin-pin-form') {
+        this.store.changeAdminPin(data.get('pin'));
+        this.setBanner('success', 'The administrator PIN was updated.');
+        return;
+      }
+
+      if (action === 'admin-profile-form') {
+        const profileId = form.dataset.profileId;
+        this.store.updateProfileDetails(profileId, {
+          name: data.get('name'),
+          email: data.get('email'),
+          pin: data.get('pin'),
+          sex: data.get('sex')
+        });
+        const updated = this.store.getProfiles().find((profile) => profile.id === profileId);
+        this.setBanner('success', `Saved learner details for ${updated?.name || 'the learner'}.`);
+        return;
+      }
+    } catch (error) {
+      this.setBanner('error', error.message || 'Something went wrong.');
+    }
+  }
+
+  handleDragStart(event) {
+    const element = event.target.closest('[data-action="dragdrop-bank"]');
+    if (!element) return;
+    event.dataTransfer.setData('text/plain', element.dataset.symbol);
+    event.dataTransfer.effectAllowed = 'move';
+  }
+
+  handleDragOver(event) {
+    const slot = event.target.closest('[data-action="dragdrop-slot"]');
+    if (!slot) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }
+
+  async handleDrop(event) {
+    const slot = event.target.closest('[data-action="dragdrop-slot"]');
+    if (!slot) return;
+    event.preventDefault();
+    const symbol = event.dataTransfer.getData('text/plain');
+    if (!symbol) return;
+
+    const result = await this.dragdrop.placeSymbol(symbol, Number(slot.dataset.slot));
+    await this.handleDragDropResult(result);
+  }
+
+  async handleClick(event) {
+    const button = event.target.closest('[data-action]');
+    if (!button) return;
+
+    const action = button.dataset.action;
+
+    try {
+      if (action === 'navigate') {
+        await this.openView(button.dataset.view, {
+          autoStart: button.dataset.view === 'challenge'
+        });
+        return;
+      }
+
+      if (action === 'go-to-learner') {
+        this.goToLearnerUrl();
+        return;
+      }
+
+
+      if (action === 'admin-tab') {
+        this.adminTab = button.dataset.tab || 'copy';
+        this.render();
+        return;
+      }
+
+      if (action === 'admin-logout') {
+        this.store.logoutAdmin();
+        this.adminTab = 'copy';
+        this.setBanner('info', 'The administrator was logged out.');
+        return;
+      }
+
+      if (action === 'admin-reset-copy') {
+        const shouldReset = window.confirm('Restore all editable page text back to the built-in defaults for this device?');
+        if (!shouldReset) return;
+        this.store.resetAdminCopy();
+        this.setBanner('info', 'Admin-managed page text was restored to the defaults.');
+        return;
+      }
+
+      if (action === 'admin-reset-profile') {
+        const profile = this.store.getProfiles().find((item) => item.id === button.dataset.profileId);
+        const shouldReset = window.confirm(`Reset all saved progress for ${profile?.name || 'this learner'} on this device?`);
+        if (!shouldReset) return;
+        this.store.resetProfileProgress(button.dataset.profileId);
+        this.setBanner('info', `${profile?.name || 'The learner'} now has a fresh start.`);
+        return;
+      }
+
+      if (action === 'admin-delete-profile') {
+        const profile = this.store.getProfiles().find((item) => item.id === button.dataset.profileId);
+        const shouldDelete = window.confirm(`Delete ${profile?.name || 'this learner'} and remove the saved progress on this device?`);
+        if (!shouldDelete) return;
+        this.store.deleteProfile(button.dataset.profileId);
+        this.setBanner('info', `${profile?.name || 'The learner'} was deleted from this device.`);
+        return;
+      }
+
+      if (action === 'logout') {
+        const activeProfile = this.store.getActiveProfile();
+        const guestMode = this.store.isGuestProfile(activeProfile);
+        this.audio.stop();
+        this.store.logoutProfile();
+        this.setBanner('info', guestMode
+          ? `${activeProfile?.name || 'The local learner'} left the local session. Progress stays on this device.`
+          : `${activeProfile?.name || 'The learner'} was logged out.`);
+        return;
+      }
+
+      if (action === 'explorer-open-second-part') {
+        this.explorer.openSecondPart();
+        this.setBanner('success', 'Explorer moved to the second part.');
+        return;
+      }
+
+      if (action === 'explorer-review-first-part') {
+        this.explorer.reviewFirstPart();
+        this.setBanner('info', 'Explorer returned to the first part for review.');
+        return;
+      }
+
+      if (action === 'explorer-symbol') {
+        await this.requireAudio(async () => {
+          const result = await this.explorer.playSymbol(button.dataset.symbol);
+          this.setBanner(result.status === 'part-advanced' ? 'success' : 'info', result.message);
+        });
+        return;
+      }
+
+      if (action === 'explorer-replay') {
+        await this.requireAudio(() => this.explorer.replayCurrent());
+        this.setBanner('success', 'Replayed the current symbol.');
+        return;
+      }
+
+      if (action === 'dragdrop-next-set') {
+        this.dragdrop.goToNextSet();
+        this.setBanner('success', 'Second set opened. Continue arranging the next families.');
+        return;
+      }
+
+      if (action === 'dragdrop-restart-journey') {
+        this.dragdrop.restartJourney();
+        this.setBanner('info', 'The whole drag-and-drop journey restarted from the first set.');
+        return;
+      }
+
+      if (action === 'dragdrop-restart-row') {
+        const { dragdrop } = this.store.getProgress();
+        if (dragdrop.completedSet) {
+          this.dragdrop.restartJourney();
+          this.setBanner('info', 'The whole drag-and-drop journey restarted from the first set.');
+        } else {
+          this.dragdrop.startRow(dragdrop.part, dragdrop.rowIndex);
+          this.setBanner('info', 'This family was shuffled again for another try.');
+        }
+        return;
+      }
+
+      if (action === 'dragdrop-continue') {
+        this.dragdrop.continueAfterCelebration();
+        this.setBanner('info', 'Continue with the next family.');
+        return;
+      }
+
+      if (action === 'dragdrop-bank') {
+        this.dragdrop.selectSymbol(button.dataset.symbol);
+        this.setBanner('info', `Selected ${button.dataset.symbol}. Now place it into the right position.`);
+        return;
+      }
+
+      if (action === 'dragdrop-slot') {
+        const slotIndex = Number(button.dataset.slot);
+        const { dragdrop } = this.store.getProgress();
+        const selectedSymbol = dragdrop.selectedSymbol;
+        if (selectedSymbol) {
+          const result = await this.dragdrop.placeSymbol(selectedSymbol, slotIndex);
+          await this.handleDragDropResult(result);
+        } else if (dragdrop.placedSymbols[slotIndex]) {
+          this.dragdrop.removeFromSlot(slotIndex);
+          this.setBanner('info', 'The letter was removed from that slot.');
+        }
+        return;
+      }
+
+      if (action === 'challenge-variant') {
+        await this.requireAudio(() => this.challenge.openVariant(Number(button.dataset.variant)));
+        this.setBanner('info', 'The selected variant opened and the next challenge was prepared.');
+        return;
+      }
+
+      if (action === 'challenge-play') {
+        await this.requireAudio(() => this.challenge.replayPrompt());
+        this.setBanner('info', 'Prompt played. Choose the matching symbol.');
+        return;
+      }
+
+      if (action === 'challenge-unlock') {
+        await this.requireAudio(() => this.challenge.unlockNextVariant());
+        this.setBanner('success', 'The next variant is now open and the first challenge has started.');
+        return;
+      }
+
+      if (action === 'challenge-guess') {
+        const result = await this.challenge.submitGuess(button.dataset.symbol);
+        await this.handleChallengeResult(result);
+        return;
+      }
+
+      if (action === 'challenge-reset') {
+        const activeProfile = this.store.getActiveProfile();
+        const shouldReset = window.confirm(`Reset all saved progress for ${activeProfile?.name || 'this learner'} on this device?`);
+        if (!shouldReset) return;
+        this.store.resetCurrentProfile();
+        this.setBanner('info', 'This learner now has a fresh start.');
+      }
+    } catch (error) {
+      this.setBanner('error', error.message || 'Something went wrong.');
+    }
+  }
+
+  async handleDragDropResult(result) {
+    if (!result) return;
+
+    if (result.status === 'row-complete' || result.status === 'set-complete') {
+      this.setBanner('success', result.message);
+      return;
+    }
+
+    if (result.status === 'wrong' || result.status === 'wrong-slot') {
+      this.setBanner('error', result.message);
+      return;
+    }
+
+    if (result.status === 'partial') {
+      this.setBanner('info', result.message);
+      return;
+    }
+
+    this.setBanner(result.ok ? 'success' : 'info', result.message || 'Drag-and-drop updated.');
+  }
+
+  async handleChallengeResult(result) {
+    if (!result) return;
+
+    if (result.status === 'continue' || result.status === 'part-advanced') {
+      await this.requireAudio(() => this.challenge.startRound(true));
+      this.setBanner('success', result.message);
+      return;
+    }
+
+    if (result.status === 'variant-complete') {
+      await this.audio.playVariantUnlock();
+      this.setBanner('success', result.message);
+      return;
+    }
+
+    if (result.status === 'course-complete') {
+      await this.audio.playFinalCelebration();
+      this.setBanner('success', result.message);
+      return;
+    }
+
+    if (result.status === 'wrong') {
+      this.setBanner('error', result.message);
+      return;
+    }
+
+    if (result.status === 'prompt-started' || result.status === 'blocked') {
+      this.setBanner('info', result.message);
+      return;
+    }
+
+    this.setBanner(result.ok ? 'success' : 'info', result.message || 'Challenge updated.');
+  }
+
+  async requireAudio(task) {
+    if (!this.audioReady) {
+      throw new Error('Audio is not ready yet. Check sounds.json and the audio files first.');
+    }
+    await task();
+  }
+
+  applyTheme() {
+    document.body.dataset.theme = this.store.getTheme();
+  }
+
+  renderThemePicker() {
+    const activeThemeId = this.store.getTheme();
+    const activeTheme = getThemeOption(activeThemeId);
+
+    return `
+      <section class='theme-panel' aria-label='Frame themes'>
+        <div class='theme-panel-head'>
+          <div>
+            <div class='profile-label'>Frame Theme</div>
+            <div class='theme-title'>Choose a frame style</div>
+          </div>
+          <div class='theme-preview' aria-hidden='true'></div>
+        </div>
+        <label class='theme-select-wrap'>
+          <span class='field-label'>Theme options</span>
+          <select class='selector theme-select' data-action='theme-select' aria-label='Choose frame theme'>
+            ${THEME_OPTIONS.map((theme) => `
+              <option value='${theme.id}' ${theme.id === activeThemeId ? 'selected' : ''}>${theme.label}</option>
+            `).join('')}
+          </select>
+        </label>
+        <p class='theme-note'>Current frame: ${activeTheme.label}. The frame stays just outside the app and adapts to phone, tablet, and desktop screens.</p>
+      </section>
+    `;
+  }
+
+  renderMenu() {
+    const adminRoute = this.route === 'admin';
+    const adminActive = adminRoute && this.store.isAdminAuthenticated();
+    const activeProfile = adminRoute ? null : this.store.getActiveProfile();
+    const items = [
+      ['home', 'Home'],
+      ['explorer', 'Learn'],
+      ['dragdrop', 'Drag & Drop'],
+      ['challenge', 'Test']
+    ];
+
+    const navigation = adminRoute
+      ? `
+        <nav class='main-menu' aria-label='Admin menu'>
+          <button class='menu-btn' type='button' data-action='go-to-learner'>Learner Page</button>
+          ${adminActive ? `<button class='menu-btn is-active' type='button'>Admin</button>` : ''}
+        </nav>
+      `
+      : `
+        <nav class='main-menu' aria-label='Main menu'>
+          ${activeProfile ? items.map(([view, label]) => `
+            <button class='menu-btn ${this.store.getProgress().activeView === view ? 'is-active' : ''}' type='button' data-action='navigate' data-view='${view}'>${label}</button>
+          `).join('') : ''}
+        </nav>
+      `;
+
+    const roleLabel = adminRoute
+      ? this.store.getText('labels.adminRole', {}, null)
+      : activeProfile
+        ? this.getLearnerTypeLabel(activeProfile)
+        : this.store.getText('labels.learnerType', {}, null);
+
+    const profileName = adminRoute
+      ? adminActive ? 'Content and learner controls' : 'Admin sign-in'
+      : activeProfile
+        ? this.store.isGuestProfile(activeProfile) ? `${activeProfile.name} (Local)` : activeProfile.name
+        : 'Choose a learner path';
+
+    const actionButton = adminRoute
+      ? adminActive ? `<button class='ghost-btn' type='button' data-action='admin-logout'>Log out admin</button>` : ''
+      : activeProfile
+        ? `<button class='ghost-btn' type='button' data-action='logout'>${this.store.isGuestProfile(activeProfile) ? 'Leave Local Session' : 'Log Out'}</button>`
+        : '';
+
+    return `
+      <header class='top-shell card'>
+        <div class='brand-block'>
+          <div class='eyebrow'>${this.store.getText('menu.brandEyebrow', {}, null)}</div>
+          <h1>${this.store.getText('menu.brandTitle', {}, null)}</h1>
+          <p class='hero-copy'>${adminRoute
+            ? this.store.getText('auth.adminIntro', {}, null)
+            : this.store.getText('menu.brandCopy', { name: activeProfile?.name || 'learner' }, activeProfile)}</p>
+        </div>
+        <div class='menu-side'>
+          ${navigation}
+          <div class='profile-bar'>
+            <div>
+              <div class='profile-label'>${roleLabel}</div>
+              <div class='profile-name'>${profileName}</div>
+            </div>
+            ${actionButton}
+          </div>
+          ${this.renderThemePicker()}
+        </div>
+      </header>
+    `;
+  }
+
+  renderBanner() {
+    return `
+      <section class='banner-card card ${this.banner.tone === 'success' ? 'is-success' : this.banner.tone === 'error' ? 'is-error' : ''}'>
+        <div class='message'>${this.banner.text}</div>
+      </section>
+    `;
+  }
+
+  renderLearnerAuthGate() {
+    const profiles = this.store.getProfiles();
+    const guestProfile = this.store.getGuestProfile();
+
+    return `
+      <section class='auth-grid'>
+        <article class='card auth-card'>
+          <div class='activity-badge'>Account</div>
+          <h2 class='section-title'>${this.store.getText('auth.registerTitle', {}, null)}</h2>
+          <p class='panel-copy'>${this.store.getText('auth.registerIntro', {}, null)}</p>
+          <form class='auth-form' data-action='register-form'>
+            <label>
+              <span class='field-label'>Learner name</span>
+              <input class='field-input' name='name' type='text' placeholder='Example: Meron' required />
+            </label>
+            <label>
+              <span class='field-label'>Email</span>
+              <input class='field-input' name='email' type='email' placeholder='meron@example.com' required />
+            </label>
+            <label>
+              <span class='field-label'>Sex</span>
+              <select class='selector' name='sex' required>
+                <option value=''>Choose one</option>
+                <option value='female'>Female</option>
+                <option value='male'>Male</option>
+              </select>
+            </label>
+            <label>
+              <span class='field-label'>Simple PIN</span>
+              <input class='field-input' name='pin' type='password' placeholder='4 digits or letters' required />
+            </label>
+            <button class='primary-btn' type='submit'>Create Account</button>
+          </form>
+        </article>
+
+        <article class='card auth-card'>
+          <div class='activity-badge'>Log In</div>
+          <h2 class='section-title'>${this.store.getText('auth.loginTitle', {}, null)}</h2>
+          <p class='panel-copy'>${this.store.getText('auth.loginIntro', {}, null)}</p>
+          ${profiles.length
+            ? `
+              <form class='auth-form' data-action='login-form'>
+                <label>
+                  <span class='field-label'>Learner</span>
+                  <select class='selector' name='profileId' required>
+                    ${profiles.map((profile) => `
+                      <option value='${profile.id}'>${profile.name}${profile.email ? ` - ${profile.email}` : ''}</option>
+                    `).join('')}
+                  </select>
+                </label>
+                <label>
+                  <span class='field-label'>PIN</span>
+                  <input class='field-input' name='pin' type='password' placeholder='Enter learner PIN' required />
+                </label>
+                <button class='secondary-btn' type='submit'>Log In</button>
+              </form>
+            `
+            : `<p class='panel-copy'>No learner accounts have been created on this device yet.</p>`}
+        </article>
+
+        <article class='card auth-card'>
+          <div class='activity-badge'>Local</div>
+          <h2 class='section-title'>${this.store.getText('auth.guestTitle', {}, guestProfile)}</h2>
+          <p class='panel-copy'>${this.store.getText('auth.guestIntro', {}, guestProfile)}</p>
+          ${guestProfile
+            ? `<div class='hint-box'>${this.store.getText('auth.guestResumeNote', { name: guestProfile.name }, guestProfile)}</div>`
+            : ''}
+          <form class='auth-form' data-action='guest-form'>
+            <label>
+              <span class='field-label'>Local learner name</span>
+              <input class='field-input' name='name' type='text' value='${this.escapeAttribute(guestProfile?.name || '')}' placeholder='Example: Meron' required />
+            </label>
+            <label>
+              <span class='field-label'>Sex</span>
+              <select class='selector' name='sex' required>
+                <option value=''>Choose one</option>
+                <option value='female' ${guestProfile?.sex === 'female' ? 'selected' : ''}>Female</option>
+                <option value='male' ${guestProfile?.sex === 'male' ? 'selected' : ''}>Male</option>
+              </select>
+            </label>
+            <button class='ghost-btn' type='submit'>${guestProfile ? 'Continue Local Session' : 'Continue Without Account'}</button>
+          </form>
+        </article>
+      </section>
+    `;
+  }
+
+  renderAdminAuthGate() {
+    const hasAdminAccount = this.store.hasAdminAccount();
+
+    return `
+      <section class='auth-grid admin-auth-grid'>
+        <article class='card auth-card'>
+          <div class='activity-badge'>Admin</div>
+          <h2 class='section-title'>${hasAdminAccount
+            ? this.store.getText('auth.adminLoginTitle', {}, null)
+            : this.store.getText('auth.adminSetupTitle', {}, null)}</h2>
+          <p class='panel-copy'>${this.store.getText('auth.adminIntro', {}, null)}</p>
+          ${hasAdminAccount
+            ? `
+              <form class='auth-form' data-action='admin-login-form'>
+                <label>
+                  <span class='field-label'>Administrator PIN</span>
+                  <input class='field-input' name='pin' type='password' placeholder='Enter administrator PIN' required />
+                </label>
+                <button class='primary-btn' type='submit'>Open Admin</button>
+              </form>
+            `
+            : `
+              <form class='auth-form' data-action='admin-setup-form'>
+                <label>
+                  <span class='field-label'>Create administrator PIN</span>
+                  <input class='field-input' name='pin' type='password' placeholder='At least 4 characters' required />
+                </label>
+                <button class='primary-btn' type='submit'>Create Admin Access</button>
+              </form>
+            `}
+          <div class='activity-actions'>
+            <button class='ghost-btn' type='button' data-action='go-to-learner'>Open Learner Page</button>
+          </div>
+        </article>
+      </section>
+    `;
+  }
+
+  renderHome() {
+    const activeProfile = this.store.getActiveProfile();
+    const { challenge } = this.store.getProgress();
+    const summaries = VARIANT_NAMES.map((_, index) => this.store.getVariantSummary(index, this.audio.audioMap));
+    const learnedTotal = summaries.reduce((total, item) => total + item.learnedCount, 0);
+    const dragdropCompleted = this.store.getDragDropProgress(1).length + this.store.getDragDropProgress(2).length;
+
+    return `
+      <section class='home-grid'>
+        <div class='home-main'>
+          <article class='card welcome-card'>
+            <div class='activity-badge'>${this.store.getText('home.pageBadge', {}, activeProfile)}</div>
+            <h2 class='section-title'>${this.store.getText('home.welcomeTitle', { name: activeProfile?.name || 'learner' }, activeProfile)}</h2>
+            <p class='panel-copy'>${this.store.getText('home.welcomeBody', { name: activeProfile?.name || 'learner' }, activeProfile)}</p>
+            <div class='activity-stack'>
+              <article class='activity-card'>
+                <h3 class='activity-title'>${this.store.getText('home.explorerTitle', {}, activeProfile)}</h3>
+                <p class='activity-copy'>${this.store.getText('home.explorerCopy', {}, activeProfile)}</p>
+                <div class='activity-actions'>
+                  <button class='primary-btn' type='button' data-action='navigate' data-view='explorer'>Open Explorer</button>
+                </div>
+              </article>
+              <article class='activity-card'>
+                <h3 class='activity-title'>${this.store.getText('home.dragdropTitle', {}, activeProfile)}</h3>
+                <p class='activity-copy'>${this.store.getText('home.dragdropCopy', {}, activeProfile)}</p>
+                <div class='activity-actions'>
+                  <button class='primary-btn' type='button' data-action='navigate' data-view='dragdrop'>Open Drag & Drop</button>
+                </div>
+              </article>
+              <article class='activity-card'>
+                <h3 class='activity-title'>${this.store.getText('home.challengeTitle', {}, activeProfile)}</h3>
+                <p class='activity-copy'>${this.store.getText('home.challengeCopy', {}, activeProfile)}</p>
+                <div class='activity-actions'>
+                  <button class='secondary-btn' type='button' data-action='navigate' data-view='challenge'>Continue Challenge</button>
+                </div>
+              </article>
+            </div>
+          </article>
+        </div>
+
+        <aside class='home-side'>
+          <article class='card side-card'>
+            <h2 class='section-title'>${this.store.getText('home.snapshotTitle', {}, activeProfile)}</h2>
+            <div class='metrics two-up'>
+              <div class='metric'>
+                <div class='metric-value'>${learnedTotal}</div>
+                <div class='metric-label'>Letters learned</div>
+              </div>
+              <div class='metric'>
+                <div class='metric-value'>${this.store.getAccuracy()}%</div>
+                <div class='metric-label'>Challenge accuracy</div>
+              </div>
+              <div class='metric'>
+                <div class='metric-value'>${dragdropCompleted}</div>
+                <div class='metric-label'>Drag & drop rows solved</div>
+              </div>
+              <div class='metric'>
+                <div class='metric-value'>${this.store.getUnlockedCount()}/${VARIANT_NAMES.length}</div>
+                <div class='metric-label'>Unlocked variants</div>
+              </div>
+            </div>
+            <p class='panel-copy'>${this.store.getText('home.snapshotSummary', {
+              learnerType: this.getLearnerTypeLabel(activeProfile),
+              variantName: VARIANT_NAMES[challenge.variantIndex],
+              part: challenge.part
+            }, activeProfile)}</p>
+          </article>
+
+          <article class='card roadmap-card'>
+            <h2 class='section-title'>${this.store.getText('home.progressTitle', {}, activeProfile)}</h2>
+            <div class='roadmap-stack'>
+              ${summaries.map((summary) => `
+                <div class='variant-summary ${summary.complete ? 'is-complete' : ''} ${summary.unlocked ? '' : 'is-locked'}'>
+                  <div>
+                    <strong>${summary.name}</strong>
+                    <div class='roadmap-text'>${summary.learnedCount}/${summary.symbolCount} learned</div>
+                  </div>
+                  <div class='variant-meta'>${summary.complete ? 'Complete' : summary.unlocked ? 'Open' : 'Locked'}</div>
+                </div>
+              `).join('')}
+            </div>
+          </article>
+        </aside>
+      </section>
+    `;
+  }
+
+  renderAdminTabs() {
+    const tabs = [
+      ['copy', 'Page Text'],
+      ['users', 'Learners'],
+      ['security', 'Security']
+    ];
+
+    return `
+      <div class='admin-tabs'>
+        ${tabs.map(([tab, label]) => `
+          <button class='chip-btn ${this.adminTab === tab ? 'is-active' : ''}' type='button' data-action='admin-tab' data-tab='${tab}'>${label}</button>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  renderAdminCopyField(field, values) {
+    const value = values[field.key] || { default: '', female: '', male: '' };
+
+    if (!field.gendered) {
+      return `
+        <div class='admin-section'>
+          <h3 class='activity-title'>${field.label}</h3>
+          <p class='panel-copy'>${field.help}</p>
+          <label class='admin-field'>
+            <span class='field-label'>Text</span>
+            <textarea class='field-input textarea-field' name='${field.key}:default' rows='4'>${this.escapeTextarea(value.default)}</textarea>
+          </label>
+        </div>
+      `;
+    }
+
+    return `
+      <div class='admin-section'>
+        <h3 class='activity-title'>${field.label}</h3>
+        <p class='panel-copy'>${field.help}</p>
+        <div class='admin-copy-grid'>
+          <label class='admin-field'>
+            <span class='field-label'>Default wording</span>
+            <textarea class='field-input textarea-field' name='${field.key}:default' rows='4'>${this.escapeTextarea(value.default)}</textarea>
+          </label>
+          <label class='admin-field'>
+            <span class='field-label'>Female wording</span>
+            <textarea class='field-input textarea-field' name='${field.key}:female' rows='4'>${this.escapeTextarea(value.female)}</textarea>
+          </label>
+          <label class='admin-field'>
+            <span class='field-label'>Male wording</span>
+            <textarea class='field-input textarea-field' name='${field.key}:male' rows='4'>${this.escapeTextarea(value.male)}</textarea>
+          </label>
+        </div>
+      </div>
+    `;
+  }
+
+  renderAdminCopyPanel() {
+    const copy = this.store.getCopyState();
+
+    return `
+      <article class='card panel-card admin-panel'>
+        <div class='hint-box'>${this.store.getText('admin.copyHint', {}, null)}</div>
+        <form class='auth-form' data-action='admin-copy-form'>
+          ${this.store.getCopySections().map((section) => `
+            <section class='workspace'>
+              <div>
+                <div class='activity-badge'>${section.title}</div>
+                <p class='panel-copy'>${section.description}</p>
+              </div>
+              <div class='admin-user-list'>
+                ${section.fields.map((field) => this.renderAdminCopyField(field, copy)).join('')}
+              </div>
+            </section>
+          `).join('')}
+          <div class='activity-actions'>
+            <button class='primary-btn' type='submit'>Save Text Changes</button>
+            <button class='ghost-btn' type='button' data-action='admin-reset-copy'>Restore Default Text</button>
+          </div>
+        </form>
+      </article>
+    `;
+  }
+
+  renderAdminUsersPanel() {
+    const profiles = this.store.getProfiles();
+    const femaleCount = profiles.filter((profile) => profile.sex === 'female').length;
+    const maleCount = profiles.filter((profile) => profile.sex === 'male').length;
+
+    return `
+      <article class='card panel-card admin-panel'>
+        <div class='stat-strip'>
+          <div class='stat-pill'><strong>${profiles.length}</strong>Learners</div>
+          <div class='stat-pill'><strong>${femaleCount}</strong>Female profiles</div>
+          <div class='stat-pill'><strong>${maleCount}</strong>Male profiles</div>
+          <div class='stat-pill'><strong>${this.store.hasAdminAccount() ? 'Ready' : 'Not set'}</strong>Admin access</div>
+        </div>
+        ${profiles.length
+          ? `
+            <div class='admin-user-list'>
+              ${profiles.map((profile) => `
+                <form class='admin-user-card admin-section' data-action='admin-profile-form' data-profile-id='${profile.id}'>
+                  <div>
+                    <h3 class='activity-title'>${profile.name}</h3>
+                    <div class='admin-meta'>${this.getLearnerTypeLabel(profile)}. ${profile.email || 'No email saved yet.'} Created ${this.formatTimestamp(profile.createdAt)}. Last login ${this.formatTimestamp(profile.lastLoginAt)}.</div>
+                  </div>
+                  <div class='admin-copy-grid'>
+                    <label class='admin-field'>
+                      <span class='field-label'>Learner name</span>
+                      <input class='field-input' name='name' type='text' value="${this.escapeAttribute(profile.name)}" required />
+                    </label>
+                    <label class='admin-field'>
+                      <span class='field-label'>Email</span>
+                      <input class='field-input' name='email' type='email' value="${this.escapeAttribute(profile.email || '')}" required />
+                    </label>
+                    <label class='admin-field'>
+                      <span class='field-label'>Sex</span>
+                      <select class='selector' name='sex' required>
+                        <option value='female' ${profile.sex === 'female' ? 'selected' : ''}>Female</option>
+                        <option value='male' ${profile.sex === 'male' ? 'selected' : ''}>Male</option>
+                      </select>
+                    </label>
+                    <label class='admin-field'>
+                      <span class='field-label'>PIN</span>
+                      <input class='field-input' name='pin' type='password' value="${this.escapeAttribute(profile.pin)}" required />
+                    </label>
+                  </div>
+                  <div class='activity-actions'>
+                    <button class='primary-btn' type='submit'>Save Learner</button>
+                    <button class='ghost-btn' type='button' data-action='admin-reset-profile' data-profile-id='${profile.id}'>Reset Progress</button>
+                    <button class='secondary-btn' type='button' data-action='admin-delete-profile' data-profile-id='${profile.id}'>Delete Learner</button>
+                  </div>
+                </form>
+              `).join('')}
+            </div>
+          `
+          : `
+            <div class='message-box'>
+              <div class='message'>No learner accounts have been created on this device yet.</div>
+            </div>
+          `}
+      </article>
+    `;
+  }
+
+  renderAdminSecurityPanel() {
+    const admin = this.store.getAdminState();
+
+    return `
+      <article class='card panel-card admin-panel'>
+        <div class='hint-box'>${this.store.getText('admin.securityHint', {}, null)}</div>
+        <div class='admin-user-list'>
+          <section class='admin-section'>
+            <div class='activity-badge'>Security</div>
+            <h3 class='activity-title'>Change administrator PIN</h3>
+            <p class='panel-copy'>Update the local PIN used to open the admin controls.</p>
+            <form class='auth-form' data-action='admin-pin-form'>
+              <label>
+                <span class='field-label'>New administrator PIN</span>
+                <input class='field-input' name='pin' type='password' placeholder='At least 4 characters' required />
+              </label>
+              <button class='primary-btn' type='submit'>Save New PIN</button>
+            </form>
+          </section>
+
+          <section class='admin-section'>
+            <div class='activity-badge'>Status</div>
+            <h3 class='activity-title'>Administrator session</h3>
+            <p class='panel-copy'>Last admin sign-in: ${this.formatTimestamp(admin.lastLoginAt)}.</p>
+            <div class='activity-actions'>
+              <button class='ghost-btn' type='button' data-action='admin-logout'>Log Out Admin</button>
+            </div>
+          </section>
+        </div>
+      </article>
+    `;
+  }
+
+  renderAdminView() {
+    let panel = this.renderAdminCopyPanel();
+    if (this.adminTab === 'users') panel = this.renderAdminUsersPanel();
+    if (this.adminTab === 'security') panel = this.renderAdminSecurityPanel();
+
+    return `
+      <section class='workspace'>
+        <div class='workspace-top'>
+          <div>
+            <h2 class='view-title'>${this.store.getText('admin.title', {}, null)}</h2>
+            <p class='panel-copy'>${this.store.getText('admin.intro', {}, null)}</p>
+          </div>
+        </div>
+        ${this.renderAdminTabs()}
+        ${panel}
+      </section>
+    `;
+  }
+
+  renderActiveLearnerView() {
+    const activeView = this.store.getProgress().activeView;
+    if (activeView === 'explorer') return this.explorer.render();
+    if (activeView === 'dragdrop') return this.dragdrop.render();
+    if (activeView === 'challenge') return this.challenge.render(this.audioReady);
+    return this.renderHome();
+  }
+
+  renderMainContent() {
+    if (this.route === 'admin') {
+      return this.store.isAdminAuthenticated() ? this.renderAdminView() : this.renderAdminAuthGate();
+    }
+
+    return this.store.hasActiveProfile() ? this.renderActiveLearnerView() : this.renderLearnerAuthGate();
+  }
+
+  render() {
+    this.updateDocumentTitle();
+    this.applyTheme();
+    this.root.innerHTML = `
+      <div class='studio-shell'>
+        ${this.renderMenu()}
+        ${this.renderBanner()}
+        ${this.renderMainContent()}
+      </div>
+    `;
+  }
+}
+
+const app = new FidelatApp(document.getElementById('app'));
+app.init();
