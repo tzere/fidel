@@ -72,6 +72,10 @@ export class AlphabetExplorerFeature {
     const helper = selectedSymbol
       ? this.store.getText('explorer.helperActive', {}, activeProfile)
       : this.store.getText('explorer.helperIdle', {}, activeProfile);
+    const titleText = this.store.getText('explorer.title', {}, activeProfile);
+    const titleEnglish = this.store.getEnglishSupportText('explorer.title', {}, activeProfile);
+    const introText = this.store.getText('explorer.intro', {}, activeProfile);
+    const introEnglish = this.store.getEnglishSupportText('explorer.intro', {}, activeProfile);
     const firstPartComplete = this.store.isExplorerPartComplete(variantIndex, 1);
     const partProgress = this.store.getExplorerProgress(variantIndex, part).length;
     const partTotal = symbols.length;
@@ -81,8 +85,10 @@ export class AlphabetExplorerFeature {
       <section class='workspace'>
         <div class='workspace-top'>
           <div>
-            <h2 class='view-title'>${this.store.getText('explorer.title', {}, activeProfile)}</h2>
-            <p class='panel-copy'>${this.store.getText('explorer.intro', {}, activeProfile)}</p>
+            <h2 class='view-title'>${titleText}</h2>
+            ${titleEnglish ? `<p class='english-copy'>${titleEnglish}</p>` : ''}
+            <p class='panel-copy'>${introText}</p>
+            ${introEnglish ? `<p class='english-copy'>${introEnglish}</p>` : ''}
           </div>
           <div class='mode-nav'>
             <button class='secondary-btn' type='button' data-action='explorer-replay'>Replay Current</button>

@@ -1,4 +1,5 @@
 import {
+  ADDITIONAL_LETTER_GROUPS,
   countPlayableSymbols,
   createEmptyMastery,
   getHighestUnlockedVariant,
@@ -6,16 +7,8 @@ import {
   isVariantComplete,
   VARIANT_NAMES
 } from '../data/fidelat-data.js';
-import { COPY_SECTIONS } from '../services/content-service.js';
+import { COPY_SECTIONS, mergeCopyWithDefaults, resolveCopy } from '../services/content-service.js';
 import { createDefaultProgressState } from '../services/storage-service.js';
-
-function getMasteryEntry(mastery, variantIndex) {
-  return mastery[variantIndex] || { part1: [], part2: [] };
-}
-
-function combineUnique(listA = [], listB = []) {
-  return [...new Set([...(Array.isArray(listA) ? listA : []), ...(Array.isArray(listB) ? listB : [])])];
-}
 
 export class ProgressStore {
   constructor(storage) {
@@ -35,10 +28,6 @@ export class ProgressStore {
     return this.state.session.profiles;
   }
 
-  hasGuestProfile() {
-    return Boolean(this.state.session.guestProfile);
-  }
-
   getGuestProfile() {
     return this.state.session.guestProfile || null;
   }
@@ -55,10 +44,6 @@ export class ProgressStore {
     return COPY_SECTIONS;
   }
 
-  getTheme() {
-    return this.state.session.themeId;
-  }
-
   getActiveProfile() {
     return this.storage.getActiveProfile(this.state);
   }
@@ -67,8 +52,12 @@ export class ProgressStore {
     return Boolean(this.getActiveProfile());
   }
 
-  isGuestProfile(profile = this.getActiveProfile()) {
-    return Boolean(profile?.localOnly);
+  isGuestProfile(profile) {
+    return Boolean(profile && (profile.kind === 'guest' || profile.localOnly === true));
+  }
+
+  isGuestActive() {
+    return this.isGuestProfile(this.getActiveProfile());
   }
 
   hasAdminAccount() {
@@ -79,20 +68,54 @@ export class ProgressStore {
     return Boolean(this.state.admin.pin && this.state.admin.loggedIn);
   }
 
+  getTheme() {
+    return this.state.session.themeId;
+  }
+
+  setTheme(themeId) {
+    this.state = this.storage.updateTheme(themeId, this.state);
+  }
+
   getText(key, variables = {}, profile = this.getActiveProfile()) {
     return this.storage.getText(this.state, key, profile, variables);
+  }
+
+  getDefaultText(key, variables = {}, profile = this.getActiveProfile()) {
+    const copy = mergeCopyWithDefaults(this.state.admin.copy);
+    const defaultOnlyCopy = Object.fromEntries(
+      Object.entries(copy).map(([entryKey, entry]) => [entryKey, {
+        ...entry,
+        female: '',
+        male: ''
+      }])
+    );
+
+    return resolveCopy(defaultOnlyCopy, key, profile, variables);
+  }
+
+  getEnglishSupportText(key, variables = {}, profile = this.getActiveProfile()) {
+    const current = this.getText(key, variables, profile).trim();
+    const fallback = this.getDefaultText(key, variables, profile).trim();
+    if (!fallback || fallback === current) {
+      return '';
+    }
+    return fallback;
   }
 
   registerProfile(name, email, pin, sex) {
     this.state = this.storage.registerProfile({ name, email, pin, sex }, this.state);
   }
 
+  loginProfile(profileId, pin) {
+    this.state = this.storage.loginProfile({ profileId, pin }, this.state);
+  }
+
   continueAsGuest(name, sex) {
     this.state = this.storage.continueAsGuest({ name, sex }, this.state);
   }
 
-  loginProfile(profileId, pin) {
-    this.state = this.storage.loginProfile({ profileId, pin }, this.state);
+  startGuestSession(name, sex) {
+    this.continueAsGuest(name, sex);
   }
 
   logoutProfile() {
@@ -137,10 +160,6 @@ export class ProgressStore {
 
   save() {
     this.storage.save(this.state);
-  }
-
-  setTheme(themeId) {
-    this.state = this.storage.updateTheme(themeId, this.state);
   }
 
   setActiveView(view) {
@@ -193,6 +212,12 @@ export class ProgressStore {
       return;
     }
 
+    if (this.isGuestProfile(activeProfile)) {
+      this.state.progress = createDefaultProgressState();
+      this.save();
+      return;
+    }
+
     this.state.progress = this.storage.resetProgressForProfile(activeProfile.id);
     this.save();
   }
@@ -236,11 +261,61 @@ export class ProgressStore {
     return getSymbolsForVariant(variantIndex, part);
   }
 
+  getAdditionalLetterGroups() {
+    return ADDITIONAL_LETTER_GROUPS;
+  }
+
+  getAdditionalLettersState() {
+    return this.state.progress.additionalLetters;
+  }
+
+  getAdditionalLetterGroup(groupId = this.state.progress.additionalLetters.groupId) {
+    return ADDITIONAL_LETTER_GROUPS.find((group) => group.id === groupId) || ADDITIONAL_LETTER_GROUPS[0];
+  }
+
+  getAdditionalLetterHeard(groupId) {
+    return this.state.progress.additionalLetters.heardSets[groupId] || [];
+  }
+
+  isAdditionalLettersGroupComplete(groupId) {
+    return this.state.progress.additionalLetters.completedGroupIds.includes(groupId);
+  }
+
+  updateAdditionalLetters(patch) {
+    this.state.progress.additionalLetters = {
+      ...this.state.progress.additionalLetters,
+      ...patch,
+      heardSets: {
+        ...this.state.progress.additionalLetters.heardSets,
+        ...(patch.heardSets || {})
+      }
+    };
+    this.save();
+  }
+
+  markAdditionalLetterHeard(groupId, symbol) {
+    const heard = this.getAdditionalLetterHeard(groupId);
+    if (heard.includes(symbol)) return;
+
+    this.updateAdditionalLetters({
+      heardSets: {
+        [groupId]: [...heard, symbol]
+      }
+    });
+  }
+
+  markAdditionalLettersGroupComplete(groupId) {
+    const completed = this.state.progress.additionalLetters.completedGroupIds;
+    if (completed.includes(groupId)) return;
+
+    this.updateAdditionalLetters({
+      completedGroupIds: [...completed, groupId]
+    });
+  }
+
   getExplorerProgress(variantIndex, part) {
-    const key = part === 2 ? 'part2' : 'part1';
-    const explorerEntry = getMasteryEntry(this.state.progress.explorer.mastery, variantIndex);
-    const challengeEntry = getMasteryEntry(this.state.progress.challenge.mastery, variantIndex);
-    return combineUnique(explorerEntry[key], challengeEntry[key]);
+    const mastery = this.state.progress.explorer.mastery[variantIndex] || { part1: [], part2: [] };
+    return part === 1 ? mastery.part1 : mastery.part2;
   }
 
   isExplorerPartComplete(variantIndex, part) {
@@ -248,21 +323,24 @@ export class ProgressStore {
   }
 
   markExplorerSymbolHeard(variantIndex, part, symbol) {
-    const key = part === 2 ? 'part2' : 'part1';
-    const variant = getMasteryEntry(this.state.progress.explorer.mastery, variantIndex);
-    if (!variant[key].includes(symbol)) {
-      const nextVariant = {
-        ...variant,
-        [key]: [...variant[key], symbol]
-      };
-      const mastery = [...this.state.progress.explorer.mastery];
-      mastery[variantIndex] = nextVariant;
-      this.state.progress.explorer = {
-        ...this.state.progress.explorer,
-        mastery
-      };
-      this.save();
+    const key = part === 1 ? 'part1' : 'part2';
+    const mastery = [...this.state.progress.explorer.mastery];
+    const variant = mastery[variantIndex] || { part1: [], part2: [] };
+
+    if (variant[key].includes(symbol)) {
+      return;
     }
+
+    mastery[variantIndex] = {
+      ...variant,
+      [key]: [...variant[key], symbol]
+    };
+
+    this.state.progress.explorer = {
+      ...this.state.progress.explorer,
+      mastery
+    };
+    this.save();
   }
 
   getPartProgress(variantIndex, part) {

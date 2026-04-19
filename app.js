@@ -2,10 +2,11 @@ import { VARIANT_NAMES } from './src/data/fidelat-data.js';
 import { ProgressStore } from './src/core/progress-store.js';
 import { AlphabetExplorerFeature } from './src/features/alphabet-explorer.js';
 import { DragDropFeature } from './src/features/drag-drop.js';
+import { AdditionalLettersFeature } from './src/features/additional-letters.js';
 import { ListenMatchFeature } from './src/features/listen-match.js';
 import { AudioService } from './src/services/audio-service.js';
 import { StorageService } from './src/services/storage-service.js';
-import { THEME_OPTIONS, getThemeOption } from './src/services/theme-service.js';
+import { THEME_OPTIONS, getThemeFrameVars } from './src/services/theme-service.js';
 
 class FidelatApp {
   constructor(root) {
@@ -16,6 +17,7 @@ class FidelatApp {
     this.audio = new AudioService();
     this.explorer = new AlphabetExplorerFeature(this.store, this.audio);
     this.dragdrop = new DragDropFeature(this.store, this.audio);
+    this.additionalLetters = new AdditionalLettersFeature(this.store, this.audio);
     this.challenge = new ListenMatchFeature(this.store, this.audio);
     this.audioReady = false;
     this.adminTab = 'copy';
@@ -23,6 +25,9 @@ class FidelatApp {
       tone: 'info',
       text: 'Loading your learning studio.'
     };
+    this.authModal = null;
+    this.pointerDrag = null;
+    this.suppressAdditionalClickUntil = 0;
   }
 
   isAdminRoute() {
@@ -60,7 +65,7 @@ class FidelatApp {
       } else {
         this.setBanner('success', this.store.hasActiveProfile()
           ? 'Sounds loaded. Continue with the learner menu above.'
-          : 'Sounds loaded. Create an account, log in, or continue locally to begin.');
+          : '');
       }
     } catch (error) {
       this.audioReady = false;
@@ -77,10 +82,109 @@ class FidelatApp {
     this.root.addEventListener('dragstart', (event) => this.handleDragStart(event));
     this.root.addEventListener('dragover', (event) => this.handleDragOver(event));
     this.root.addEventListener('drop', (event) => this.handleDrop(event));
+    this.root.addEventListener('pointerdown', (event) => this.handlePointerDown(event));
+    window.addEventListener('pointermove', (event) => this.handlePointerMove(event), { passive: false });
+    window.addEventListener('pointerup', (event) => this.handlePointerUp(event));
+    window.addEventListener('pointercancel', (event) => this.handlePointerCancel(event));
+  }
+
+  createPointerDragGhost(symbol) {
+    const ghost = document.createElement('div');
+    ghost.className = 'pointer-drag-ghost';
+    ghost.textContent = symbol;
+    document.body.appendChild(ghost);
+    return ghost;
+  }
+
+  positionPointerDragGhost(drag, clientX, clientY) {
+    if (!drag?.ghost) return;
+    drag.ghost.style.transform = `translate(${clientX + 18}px, ${clientY + 18}px)`;
+  }
+
+  clearPointerDrag(options = {}) {
+    const { suppressClick = false } = options;
+    if (this.pointerDrag?.ghost) this.pointerDrag.ghost.remove();
+    this.pointerDrag = null;
+    if (suppressClick) this.suppressAdditionalClickUntil = Date.now() + 400;
+  }
+
+  handlePointerDown(event) {
+    if (event.button !== undefined && event.button !== 0) return;
+
+    const button = event.target.closest('[data-action="additional-drag-bank"]');
+    if (!button) return;
+
+    const activeProfile = this.store.getActiveProfile();
+    const activeView = this.store.getProgress().activeView;
+    const additionalState = this.store.getAdditionalLettersState();
+    if (!activeProfile || activeView !== 'additionalLetters' || additionalState.tab !== 'dragdrop') return;
+
+    this.pointerDrag = {
+      pointerId: event.pointerId,
+      symbol: button.dataset.symbol,
+      startX: event.clientX,
+      startY: event.clientY,
+      dragging: false,
+      ghost: null
+    };
+  }
+
+  handlePointerMove(event) {
+    const drag = this.pointerDrag;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    const movedFarEnough = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) >= 8;
+    if (!drag.dragging && !movedFarEnough) return;
+
+    if (!drag.dragging) {
+      drag.dragging = true;
+      drag.ghost = this.createPointerDragGhost(drag.symbol);
+    }
+
+    this.positionPointerDragGhost(drag, event.clientX, event.clientY);
+    event.preventDefault();
+  }
+
+  async handlePointerUp(event) {
+    const drag = this.pointerDrag;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    if (!drag.dragging) {
+      this.clearPointerDrag();
+      return;
+    }
+
+    const slot = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-action="additional-drag-slot"]');
+    const symbol = drag.symbol;
+    this.clearPointerDrag({ suppressClick: true });
+
+    if (!slot) return;
+
+    try {
+      const result = await this.additionalLetters.placeSymbol(symbol, Number(slot.dataset.slot));
+      await this.handleAdditionalLettersResult(result);
+    } catch (error) {
+      this.setBanner('error', error.message || 'Something went wrong.');
+    }
+  }
+
+  handlePointerCancel(event) {
+    const drag = this.pointerDrag;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    this.clearPointerDrag({ suppressClick: drag.dragging });
   }
 
   getLearnerTypeLabel(profile) {
     return this.store.getText('labels.learnerType', {}, profile);
+  }
+
+  getEnglishSupportText(key, variables = {}, profile = this.store.getActiveProfile()) {
+    return this.store.getEnglishSupportText(key, variables, profile);
+  }
+
+  renderEnglishSupport(key, variables = {}, profile = this.store.getActiveProfile(), className = 'english-copy') {
+    const english = this.getEnglishSupportText(key, variables, profile);
+    return english ? `<p class='${className}'>${english}</p>` : '';
   }
 
   getCurrentViewTitle() {
@@ -92,6 +196,7 @@ class FidelatApp {
     if (activeView === 'explorer') return this.store.getText('explorer.title', {}, activeProfile);
     if (activeView === 'dragdrop') return this.store.getText('dragdrop.title', {}, activeProfile);
     if (activeView === 'challenge') return this.store.getText('challenge.title', {}, activeProfile);
+    if (activeView === 'additionalLetters') return this.store.getText('additional.title', {}, activeProfile);
     return this.store.getText('home.welcomeTitle', { name: activeProfile.name }, activeProfile);
   }
 
@@ -130,6 +235,36 @@ class FidelatApp {
     this.render();
   }
 
+  openAuthModal(mode = 'login', options = {}) {
+    this.authModal = {
+      mode,
+      message: typeof options.message === 'string' ? options.message : '',
+      redirectView: options.redirectView || null
+    };
+    this.render();
+  }
+
+  closeAuthModal() {
+    if (!this.authModal) return;
+    this.authModal = null;
+    this.render();
+  }
+
+  async completeLearnerAuthSuccess(message) {
+    const redirectView = this.authModal?.redirectView || 'home';
+    this.authModal = null;
+    this.store.setActiveView(redirectView);
+
+    if (redirectView === 'challenge') {
+      const { challenge } = this.store.getProgress();
+      if (!challenge.targetSymbol && !challenge.unlockReadyVariantIndex && !challenge.courseCompleted) {
+        await this.requireAudio(() => this.challenge.startRound(true));
+      }
+    }
+
+    this.setBanner('success', message);
+  }
+
   async openView(view, options = {}) {
     if (view === 'admin') {
       this.goToAdminUrl();
@@ -142,7 +277,24 @@ class FidelatApp {
     }
 
     if (!this.store.hasActiveProfile()) {
-      this.setBanner('error', 'Create an account, log in, or continue locally before opening learner activities.');
+      if (view === 'home') {
+        this.authModal = null;
+        this.store.setActiveView('home');
+        this.render();
+        return;
+      }
+
+      const labels = {
+        explorer: 'Learn',
+        dragdrop: 'Test 1',
+        challenge: 'Test 2',
+        additionalLetters: 'More Letters'
+      };
+
+      this.openAuthModal('login', {
+        message: `Login to keep your progress before opening ${labels[view] || 'this activity'}.`,
+        redirectView: view
+      });
       return;
     }
 
@@ -200,21 +352,27 @@ class FidelatApp {
       if (action === 'register-form') {
         this.store.registerProfile(data.get('name'), data.get('email'), data.get('pin'), data.get('sex'));
         const profile = this.store.getActiveProfile();
-        this.setBanner('success', this.store.getText('system.profileCreated', { name: profile.name }, profile));
+        await this.completeLearnerAuthSuccess(
+          this.store.getText('system.profileCreated', { name: profile.name }, profile)
+        );
         return;
       }
 
       if (action === 'login-form') {
         this.store.loginProfile(data.get('profileId'), data.get('pin'));
         const profile = this.store.getActiveProfile();
-        this.setBanner('success', this.store.getText('system.loginRestored', { name: profile.name }, profile));
+        await this.completeLearnerAuthSuccess(
+          this.store.getText('system.loginRestored', { name: profile.name }, profile)
+        );
         return;
       }
 
       if (action === 'guest-form') {
         this.store.continueAsGuest(data.get('name'), data.get('sex'));
         const profile = this.store.getActiveProfile();
-        this.setBanner('success', this.store.getText('system.guestStarted', { name: profile.name }, profile));
+        await this.completeLearnerAuthSuccess(
+          this.store.getText('system.guestStarted', { name: profile.name }, profile)
+        );
         return;
       }
 
@@ -278,13 +436,14 @@ class FidelatApp {
   }
 
   async handleDrop(event) {
-    const slot = event.target.closest('[data-action="dragdrop-slot"]');
-    if (!slot) return;
+    const dragdropSlot = event.target.closest('[data-action="dragdrop-slot"]');
+    if (!dragdropSlot) return;
+
     event.preventDefault();
     const symbol = event.dataTransfer.getData('text/plain');
     if (!symbol) return;
 
-    const result = await this.dragdrop.placeSymbol(symbol, Number(slot.dataset.slot));
+    const result = await this.dragdrop.placeSymbol(symbol, Number(dragdropSlot.dataset.slot));
     await this.handleDragDropResult(result);
   }
 
@@ -294,7 +453,34 @@ class FidelatApp {
 
     const action = button.dataset.action;
 
+    if (
+      (action === 'additional-drag-bank' || action === 'additional-drag-slot')
+      && Date.now() < this.suppressAdditionalClickUntil
+    ) {
+      return;
+    }
+
     try {
+      if (action === 'auth-link') {
+        this.openAuthModal(button.dataset.mode || 'login', {
+          message: button.dataset.message || '',
+          redirectView: button.dataset.redirectView || null
+        });
+        return;
+      }
+
+      if (action === 'auth-switch') {
+        this.openAuthModal(button.dataset.mode || 'login', {
+          redirectView: button.dataset.redirectView || this.authModal?.redirectView || null
+        });
+        return;
+      }
+
+      if (action === 'close-auth-modal') {
+        this.closeAuthModal();
+        return;
+      }
+
       if (action === 'navigate') {
         await this.openView(button.dataset.view, {
           autoStart: button.dataset.view === 'challenge'
@@ -302,11 +488,15 @@ class FidelatApp {
         return;
       }
 
+      if (action === 'go-to-admin') {
+        this.goToAdminUrl();
+        return;
+      }
+
       if (action === 'go-to-learner') {
         this.goToLearnerUrl();
         return;
       }
-
 
       if (action === 'admin-tab') {
         this.adminTab = button.dataset.tab || 'copy';
@@ -355,6 +545,58 @@ class FidelatApp {
         this.setBanner('info', guestMode
           ? `${activeProfile?.name || 'The local learner'} left the local session. Progress stays on this device.`
           : `${activeProfile?.name || 'The learner'} was logged out.`);
+        return;
+      }
+
+      if (action === 'additional-set') {
+        this.additionalLetters.selectGroup(button.dataset.groupId);
+        this.render();
+        return;
+      }
+
+      if (action === 'additional-tab') {
+        this.additionalLetters.setTab(button.dataset.tab);
+        this.render();
+        return;
+      }
+
+      if (action === 'additional-play') {
+        await this.requireAudio(async () => {
+          const result = await this.additionalLetters.playSymbol(button.dataset.symbol);
+          this.setBanner('info', result.message);
+        });
+        return;
+      }
+
+      if (action === 'additional-replay') {
+        await this.requireAudio(() => this.additionalLetters.replayCurrent());
+        this.setBanner('success', 'Replayed the current additional letter.');
+        return;
+      }
+
+      if (action === 'additional-drag-reset') {
+        this.additionalLetters.resetDragdrop();
+        this.setBanner('info', 'The current additional-letter set was shuffled again.');
+        return;
+      }
+
+      if (action === 'additional-drag-bank') {
+        this.additionalLetters.selectDragSymbol(button.dataset.symbol);
+        this.setBanner('info', `Selected ${button.dataset.symbol}. Now place it into the right position.`);
+        return;
+      }
+
+      if (action === 'additional-drag-slot') {
+        const slotIndex = Number(button.dataset.slot);
+        const additionalState = this.store.getAdditionalLettersState();
+        const selectedSymbol = additionalState.selectedDragSymbol;
+        if (selectedSymbol) {
+          const result = await this.additionalLetters.placeSymbol(selectedSymbol, slotIndex);
+          await this.handleAdditionalLettersResult(result);
+        } else if (additionalState.placedSymbols[slotIndex]) {
+          this.additionalLetters.removeFromSlot(slotIndex);
+          this.setBanner('info', 'The letter was removed from that slot.');
+        }
         return;
       }
 
@@ -533,31 +775,27 @@ class FidelatApp {
   }
 
   applyTheme() {
-    document.body.dataset.theme = this.store.getTheme();
+    const activeThemeId = this.store.getTheme();
+    document.body.dataset.theme = activeThemeId;
+    const frameVars = getThemeFrameVars(activeThemeId);
+    Object.entries(frameVars).forEach(([key, value]) => {
+      document.body.style.setProperty(key, value);
+    });
   }
 
   renderThemePicker() {
     const activeThemeId = this.store.getTheme();
-    const activeTheme = getThemeOption(activeThemeId);
 
     return `
       <section class='theme-panel' aria-label='Frame themes'>
-        <div class='theme-panel-head'>
-          <div>
-            <div class='profile-label'>Frame Theme</div>
-            <div class='theme-title'>Choose a frame style</div>
-          </div>
-          <div class='theme-preview' aria-hidden='true'></div>
-        </div>
-        <label class='theme-select-wrap'>
-          <span class='field-label'>Theme options</span>
+        <label class='theme-inline'>
+          <span class='theme-inline-label'>Choose theme</span>
           <select class='selector theme-select' data-action='theme-select' aria-label='Choose frame theme'>
             ${THEME_OPTIONS.map((theme) => `
               <option value='${theme.id}' ${theme.id === activeThemeId ? 'selected' : ''}>${theme.label}</option>
             `).join('')}
           </select>
         </label>
-        <p class='theme-note'>Current frame: ${activeTheme.label}. The frame stays just outside the app and adapts to phone, tablet, and desktop screens.</p>
       </section>
     `;
   }
@@ -566,11 +804,13 @@ class FidelatApp {
     const adminRoute = this.route === 'admin';
     const adminActive = adminRoute && this.store.isAdminAuthenticated();
     const activeProfile = adminRoute ? null : this.store.getActiveProfile();
+    const activeView = this.store.getProgress().activeView;
     const items = [
       ['home', 'Home'],
       ['explorer', 'Learn'],
-      ['dragdrop', 'Drag & Drop'],
-      ['challenge', 'Test']
+      ['dragdrop', 'Test 1'],
+      ['challenge', 'Test 2'],
+      ['additionalLetters', 'More']
     ];
 
     const navigation = adminRoute
@@ -582,9 +822,9 @@ class FidelatApp {
       `
       : `
         <nav class='main-menu' aria-label='Main menu'>
-          ${activeProfile ? items.map(([view, label]) => `
-            <button class='menu-btn ${this.store.getProgress().activeView === view ? 'is-active' : ''}' type='button' data-action='navigate' data-view='${view}'>${label}</button>
-          `).join('') : ''}
+          ${items.map(([view, label]) => `
+            <button class='menu-btn ${activeView === view ? 'is-active' : ''}' type='button' data-action='navigate' data-view='${view}'>${label}</button>
+          `).join('')}
         </nav>
       `;
 
@@ -597,13 +837,13 @@ class FidelatApp {
     const profileName = adminRoute
       ? adminActive ? 'Content and learner controls' : 'Admin sign-in'
       : activeProfile
-        ? this.store.isGuestProfile(activeProfile) ? `${activeProfile.name} (Local)` : activeProfile.name
-        : 'Choose a learner path';
+        ? this.store.isGuestProfile(activeProfile) ? `${activeProfile.name} (Guest)` : activeProfile.name
+        : 'Login, register, or continue as guest';
 
     const actionButton = adminRoute
       ? adminActive ? `<button class='ghost-btn' type='button' data-action='admin-logout'>Log out admin</button>` : ''
       : activeProfile
-        ? `<button class='ghost-btn' type='button' data-action='logout'>${this.store.isGuestProfile(activeProfile) ? 'Leave Local Session' : 'Log Out'}</button>`
+        ? `<button class='ghost-btn' type='button' data-action='logout'>${this.store.isGuestProfile(activeProfile) ? 'Leave Guest Session' : 'Log Out'}</button>`
         : '';
 
     return `
@@ -611,9 +851,11 @@ class FidelatApp {
         <div class='brand-block'>
           <div class='eyebrow'>${this.store.getText('menu.brandEyebrow', {}, null)}</div>
           <h1>${this.store.getText('menu.brandTitle', {}, null)}</h1>
+          ${!adminRoute ? this.renderEnglishSupport('menu.brandTitle', {}, activeProfile, 'english-copy hero-english-copy') : ''}
           <p class='hero-copy'>${adminRoute
             ? this.store.getText('auth.adminIntro', {}, null)
             : this.store.getText('menu.brandCopy', { name: activeProfile?.name || 'learner' }, activeProfile)}</p>
+          ${!adminRoute ? this.renderEnglishSupport('menu.brandCopy', { name: activeProfile?.name || 'learner' }, activeProfile, 'english-copy hero-english-copy') : ''}
         </div>
         <div class='menu-side'>
           ${navigation}
@@ -631,6 +873,8 @@ class FidelatApp {
   }
 
   renderBanner() {
+    if (!this.banner.text) return '';
+
     return `
       <section class='banner-card card ${this.banner.tone === 'success' ? 'is-success' : this.banner.tone === 'error' ? 'is-error' : ''}'>
         <div class='message'>${this.banner.text}</div>
@@ -638,90 +882,132 @@ class FidelatApp {
     `;
   }
 
-  renderLearnerAuthGate() {
-    const profiles = this.store.getProfiles();
-    const guestProfile = this.store.getGuestProfile();
+  renderAuthLauncher() {
+    if (this.store.hasActiveProfile()) return '';
 
     return `
-      <section class='auth-grid'>
-        <article class='card auth-card'>
-          <div class='activity-badge'>Account</div>
-          <h2 class='section-title'>${this.store.getText('auth.registerTitle', {}, null)}</h2>
-          <p class='panel-copy'>${this.store.getText('auth.registerIntro', {}, null)}</p>
-          <form class='auth-form' data-action='register-form'>
+      <article class='card auth-entry-card'>
+        <div class='activity-badge'>Start Here</div>
+        <h2 class='section-title'>Login to keep your progress</h2>
+        <div class='auth-link-row'>
+          <button class='link-btn' type='button' data-action='auth-link' data-mode='login' data-message='Login to keep your progress.'>Login</button>
+          <button class='link-btn' type='button' data-action='auth-link' data-mode='register'>Register</button>
+          <button class='link-btn' type='button' data-action='auth-link' data-mode='guest'>Continue as Guest</button>
+        </div>
+      </article>
+    `;
+  }
+
+  renderAuthModal() {
+    if (!this.authModal) return '';
+
+    const mode = this.authModal.mode || 'login';
+    const redirectView = this.escapeAttribute(this.authModal.redirectView || '');
+    const profiles = this.store.getProfiles();
+    const guestProfile = this.store.getGuestProfile();
+    const note = this.authModal.message
+      ? `<div class='hint-box auth-modal-note'>${this.authModal.message}</div>`
+      : '';
+
+    let badge = 'Login';
+    let title = this.store.getText('auth.loginTitle', {}, null);
+    let intro = this.store.getText('auth.loginIntro', {}, null);
+    let content = profiles.length
+      ? `
+          <form class='auth-form' data-action='login-form'>
             <label>
-              <span class='field-label'>Learner name</span>
-              <input class='field-input' name='name' type='text' placeholder='Example: Meron' required />
-            </label>
-            <label>
-              <span class='field-label'>Email</span>
-              <input class='field-input' name='email' type='email' placeholder='meron@example.com' required />
-            </label>
-            <label>
-              <span class='field-label'>Sex</span>
-              <select class='selector' name='sex' required>
-                <option value=''>Choose one</option>
-                <option value='female'>Female</option>
-                <option value='male'>Male</option>
+              <span class='field-label'>Learner</span>
+              <select class='selector' name='profileId' required>
+                ${profiles.map((profile) => `
+                  <option value='${profile.id}'>${profile.name}${profile.email ? ` - ${profile.email}` : ''}</option>
+                `).join('')}
               </select>
             </label>
             <label>
-              <span class='field-label'>Simple PIN</span>
-              <input class='field-input' name='pin' type='password' placeholder='4 digits or letters' required />
+              <span class='field-label'>PIN</span>
+              <input class='field-input' name='pin' type='password' placeholder='Enter learner PIN' required />
             </label>
-            <button class='primary-btn' type='submit'>Create Account</button>
+            <button class='primary-btn' type='submit'>Log In</button>
           </form>
-        </article>
+        `
+      : `<div class='message-box'><div class='message'>No learner accounts have been created on this device yet.</div></div>`;
 
-        <article class='card auth-card'>
-          <div class='activity-badge'>Log In</div>
-          <h2 class='section-title'>${this.store.getText('auth.loginTitle', {}, null)}</h2>
-          <p class='panel-copy'>${this.store.getText('auth.loginIntro', {}, null)}</p>
-          ${profiles.length
-            ? `
-              <form class='auth-form' data-action='login-form'>
-                <label>
-                  <span class='field-label'>Learner</span>
-                  <select class='selector' name='profileId' required>
-                    ${profiles.map((profile) => `
-                      <option value='${profile.id}'>${profile.name}${profile.email ? ` - ${profile.email}` : ''}</option>
-                    `).join('')}
-                  </select>
-                </label>
-                <label>
-                  <span class='field-label'>PIN</span>
-                  <input class='field-input' name='pin' type='password' placeholder='Enter learner PIN' required />
-                </label>
-                <button class='secondary-btn' type='submit'>Log In</button>
-              </form>
-            `
-            : `<p class='panel-copy'>No learner accounts have been created on this device yet.</p>`}
-        </article>
+    if (mode === 'register') {
+      badge = 'Register';
+      title = this.store.getText('auth.registerTitle', {}, null);
+      intro = this.store.getText('auth.registerIntro', {}, null);
+      content = `
+        <form class='auth-form' data-action='register-form'>
+          <label>
+            <span class='field-label'>Learner name</span>
+            <input class='field-input' name='name' type='text' placeholder='Example: Meron' required />
+          </label>
+          <label>
+            <span class='field-label'>Email</span>
+            <input class='field-input' name='email' type='email' placeholder='meron@example.com' required />
+          </label>
+          <label>
+            <span class='field-label'>M/F</span>
+            <select class='selector' name='sex' required>
+              <option value=''>Choose one</option>
+              <option value='female'>Female</option>
+              <option value='male'>Male</option>
+            </select>
+          </label>
+          <label>
+            <span class='field-label'>Simple PIN</span>
+            <input class='field-input' name='pin' type='password' placeholder='4 digits or letters' required />
+          </label>
+          <button class='primary-btn' type='submit'>Create Account</button>
+        </form>
+      `;
+    }
 
-        <article class='card auth-card'>
-          <div class='activity-badge'>Local</div>
-          <h2 class='section-title'>${this.store.getText('auth.guestTitle', {}, guestProfile)}</h2>
-          <p class='panel-copy'>${this.store.getText('auth.guestIntro', {}, guestProfile)}</p>
-          ${guestProfile
-            ? `<div class='hint-box'>${this.store.getText('auth.guestResumeNote', { name: guestProfile.name }, guestProfile)}</div>`
-            : ''}
-          <form class='auth-form' data-action='guest-form'>
-            <label>
-              <span class='field-label'>Local learner name</span>
-              <input class='field-input' name='name' type='text' value='${this.escapeAttribute(guestProfile?.name || '')}' placeholder='Example: Meron' required />
-            </label>
-            <label>
-              <span class='field-label'>Sex</span>
-              <select class='selector' name='sex' required>
-                <option value=''>Choose one</option>
-                <option value='female' ${guestProfile?.sex === 'female' ? 'selected' : ''}>Female</option>
-                <option value='male' ${guestProfile?.sex === 'male' ? 'selected' : ''}>Male</option>
-              </select>
-            </label>
-            <button class='ghost-btn' type='submit'>${guestProfile ? 'Continue Local Session' : 'Continue Without Account'}</button>
-          </form>
-        </article>
-      </section>
+    if (mode === 'guest') {
+      badge = 'Guest';
+      title = this.store.getText('auth.guestTitle', {}, guestProfile);
+      intro = this.store.getText('auth.guestIntro', {}, guestProfile);
+      content = `
+        ${guestProfile
+          ? `<div class='hint-box'>${this.store.getText('auth.guestResumeNote', { name: guestProfile.name }, guestProfile)}</div>`
+          : ''}
+        <form class='auth-form' data-action='guest-form'>
+          <label>
+            <span class='field-label'>Local learner name</span>
+            <input class='field-input' name='name' type='text' value='${this.escapeAttribute(guestProfile?.name || '')}' placeholder='Example: Meron' required />
+          </label>
+          <label>
+            <span class='field-label'>M/F</span>
+            <select class='selector' name='sex' required>
+              <option value=''>Choose one</option>
+              <option value='female' ${guestProfile?.sex === 'female' ? 'selected' : ''}>Female</option>
+              <option value='male' ${guestProfile?.sex === 'male' ? 'selected' : ''}>Male</option>
+            </select>
+          </label>
+          <button class='primary-btn' type='submit'>${guestProfile ? 'Continue as Guest' : 'Start Guest Session'}</button>
+        </form>
+      `;
+    }
+
+    return `
+      <div class='auth-modal-layer'>
+        <button class='modal-backdrop' type='button' data-action='close-auth-modal' aria-label='Close authentication dialog'></button>
+        <section class='auth-modal-shell' role='dialog' aria-modal='true' aria-labelledby='auth-modal-title'>
+          <article class='card auth-modal-card'>
+            <button class='modal-close' type='button' data-action='close-auth-modal' aria-label='Close authentication dialog'>&times;</button>
+            <div class='activity-badge'>${badge}</div>
+            <h2 class='section-title' id='auth-modal-title'>${title}</h2>
+            ${note}
+            <p class='panel-copy'>${intro}</p>
+            ${content}
+            <div class='auth-switch-row'>
+              <button class='chip-btn ${mode === 'login' ? 'is-active' : ''}' type='button' data-action='auth-switch' data-mode='login' data-redirect-view='${redirectView}'>Login</button>
+              <button class='chip-btn ${mode === 'register' ? 'is-active' : ''}' type='button' data-action='auth-switch' data-mode='register' data-redirect-view='${redirectView}'>Register</button>
+              <button class='chip-btn ${mode === 'guest' ? 'is-active' : ''}' type='button' data-action='auth-switch' data-mode='guest' data-redirect-view='${redirectView}'>Continue as Guest</button>
+            </div>
+          </article>
+        </section>
+      </div>
     `;
   }
 
@@ -769,34 +1055,65 @@ class FidelatApp {
     const summaries = VARIANT_NAMES.map((_, index) => this.store.getVariantSummary(index, this.audio.audioMap));
     const learnedTotal = summaries.reduce((total, item) => total + item.learnedCount, 0);
     const dragdropCompleted = this.store.getDragDropProgress(1).length + this.store.getDragDropProgress(2).length;
+    const welcomeTitle = activeProfile
+      ? this.store.getText('home.welcomeTitle', { name: activeProfile.name }, activeProfile)
+      : '';
+    const welcomeBody = activeProfile
+      ? this.store.getText('home.welcomeBody', { name: activeProfile.name }, activeProfile)
+      : '';
+    const snapshotSummary = activeProfile
+      ? this.store.getText('home.snapshotSummary', {
+          learnerType: this.getLearnerTypeLabel(activeProfile),
+          variantName: VARIANT_NAMES[challenge.variantIndex],
+          part: challenge.part
+        }, activeProfile)
+      : '';
 
     return `
       <section class='home-grid'>
         <div class='home-main'>
+          ${this.renderAuthLauncher()}
           <article class='card welcome-card'>
             <div class='activity-badge'>${this.store.getText('home.pageBadge', {}, activeProfile)}</div>
-            <h2 class='section-title'>${this.store.getText('home.welcomeTitle', { name: activeProfile?.name || 'learner' }, activeProfile)}</h2>
-            <p class='panel-copy'>${this.store.getText('home.welcomeBody', { name: activeProfile?.name || 'learner' }, activeProfile)}</p>
+            ${welcomeTitle ? `<h2 class='section-title'>${welcomeTitle}</h2>` : ''}
+            ${welcomeTitle ? this.renderEnglishSupport('home.welcomeTitle', { name: activeProfile?.name || 'learner' }, activeProfile) : ''}
+            ${welcomeBody ? `<p class='panel-copy'>${welcomeBody}</p>` : ''}
+            ${welcomeBody ? this.renderEnglishSupport('home.welcomeBody', { name: activeProfile?.name || 'learner' }, activeProfile) : ''}
             <div class='activity-stack'>
               <article class='activity-card'>
                 <h3 class='activity-title'>${this.store.getText('home.explorerTitle', {}, activeProfile)}</h3>
+                ${this.renderEnglishSupport('home.explorerTitle', {}, activeProfile)}
                 <p class='activity-copy'>${this.store.getText('home.explorerCopy', {}, activeProfile)}</p>
+                ${this.renderEnglishSupport('home.explorerCopy', {}, activeProfile)}
                 <div class='activity-actions'>
-                  <button class='primary-btn' type='button' data-action='navigate' data-view='explorer'>Open Explorer</button>
+                  <button class='primary-btn' type='button' data-action='navigate' data-view='explorer'>Open Learn</button>
                 </div>
               </article>
               <article class='activity-card'>
                 <h3 class='activity-title'>${this.store.getText('home.dragdropTitle', {}, activeProfile)}</h3>
+                ${this.renderEnglishSupport('home.dragdropTitle', {}, activeProfile)}
                 <p class='activity-copy'>${this.store.getText('home.dragdropCopy', {}, activeProfile)}</p>
+                ${this.renderEnglishSupport('home.dragdropCopy', {}, activeProfile)}
                 <div class='activity-actions'>
-                  <button class='primary-btn' type='button' data-action='navigate' data-view='dragdrop'>Open Drag & Drop</button>
+                  <button class='primary-btn' type='button' data-action='navigate' data-view='dragdrop'>Open Test 1</button>
                 </div>
               </article>
               <article class='activity-card'>
                 <h3 class='activity-title'>${this.store.getText('home.challengeTitle', {}, activeProfile)}</h3>
+                ${this.renderEnglishSupport('home.challengeTitle', {}, activeProfile)}
                 <p class='activity-copy'>${this.store.getText('home.challengeCopy', {}, activeProfile)}</p>
+                ${this.renderEnglishSupport('home.challengeCopy', {}, activeProfile)}
                 <div class='activity-actions'>
-                  <button class='secondary-btn' type='button' data-action='navigate' data-view='challenge'>Continue Challenge</button>
+                  <button class='primary-btn' type='button' data-action='navigate' data-view='challenge'>Open Test 2</button>
+                </div>
+              </article>
+              <article class='activity-card'>
+                <h3 class='activity-title'>${this.store.getText('home.additionalTitle', {}, activeProfile)}</h3>
+                ${this.renderEnglishSupport('home.additionalTitle', {}, activeProfile)}
+                <p class='activity-copy'>${this.store.getText('home.additionalCopy', {}, activeProfile)}</p>
+                ${this.renderEnglishSupport('home.additionalCopy', {}, activeProfile)}
+                <div class='activity-actions'>
+                  <button class='primary-btn' type='button' data-action='navigate' data-view='additionalLetters'>${this.store.getText('home.additionalButtonLabel', {}, null)}</button>
                 </div>
               </article>
             </div>
@@ -806,6 +1123,7 @@ class FidelatApp {
         <aside class='home-side'>
           <article class='card side-card'>
             <h2 class='section-title'>${this.store.getText('home.snapshotTitle', {}, activeProfile)}</h2>
+            ${this.renderEnglishSupport('home.snapshotTitle', {}, activeProfile)}
             <div class='metrics two-up'>
               <div class='metric'>
                 <div class='metric-value'>${learnedTotal}</div>
@@ -824,15 +1142,17 @@ class FidelatApp {
                 <div class='metric-label'>Unlocked variants</div>
               </div>
             </div>
-            <p class='panel-copy'>${this.store.getText('home.snapshotSummary', {
+            ${snapshotSummary ? `<p class='panel-copy'>${snapshotSummary}</p>` : ''}
+            ${snapshotSummary ? this.renderEnglishSupport('home.snapshotSummary', {
               learnerType: this.getLearnerTypeLabel(activeProfile),
               variantName: VARIANT_NAMES[challenge.variantIndex],
               part: challenge.part
-            }, activeProfile)}</p>
+            }, activeProfile) : ''}
           </article>
 
           <article class='card roadmap-card'>
             <h2 class='section-title'>${this.store.getText('home.progressTitle', {}, activeProfile)}</h2>
+            ${this.renderEnglishSupport('home.progressTitle', {}, activeProfile)}
             <div class='roadmap-stack'>
               ${summaries.map((summary) => `
                 <div class='variant-summary ${summary.complete ? 'is-complete' : ''} ${summary.unlocked ? '' : 'is-locked'}'>
@@ -963,7 +1283,7 @@ class FidelatApp {
                       <input class='field-input' name='email' type='email' value="${this.escapeAttribute(profile.email || '')}" required />
                     </label>
                     <label class='admin-field'>
-                      <span class='field-label'>Sex</span>
+                      <span class='field-label'>M/F</span>
                       <select class='selector' name='sex' required>
                         <option value='female' ${profile.sex === 'female' ? 'selected' : ''}>Female</option>
                         <option value='male' ${profile.sex === 'male' ? 'selected' : ''}>Male</option>
@@ -1045,10 +1365,12 @@ class FidelatApp {
   }
 
   renderActiveLearnerView() {
-    const activeView = this.store.getProgress().activeView;
-    if (activeView === 'explorer') return this.explorer.render();
-    if (activeView === 'dragdrop') return this.dragdrop.render();
-    if (activeView === 'challenge') return this.challenge.render(this.audioReady);
+    const activeProfile = this.store.getActiveProfile();
+    const activeView = activeProfile ? this.store.getProgress().activeView : 'home';
+    if (activeView === 'explorer' && activeProfile) return this.explorer.render();
+    if (activeView === 'dragdrop' && activeProfile) return this.dragdrop.render();
+    if (activeView === 'challenge' && activeProfile) return this.challenge.render(this.audioReady);
+    if (activeView === 'additionalLetters' && activeProfile) return this.additionalLetters.render();
     return this.renderHome();
   }
 
@@ -1057,18 +1379,21 @@ class FidelatApp {
       return this.store.isAdminAuthenticated() ? this.renderAdminView() : this.renderAdminAuthGate();
     }
 
-    return this.store.hasActiveProfile() ? this.renderActiveLearnerView() : this.renderLearnerAuthGate();
+    return this.renderActiveLearnerView();
   }
 
   render() {
     this.updateDocumentTitle();
     this.applyTheme();
     this.root.innerHTML = `
-      <div class='studio-shell'>
-        ${this.renderMenu()}
-        ${this.renderBanner()}
-        ${this.renderMainContent()}
+      <div class='app-frame'>
+        <div class='studio-shell'>
+          ${this.renderMenu()}
+          ${this.renderBanner()}
+          ${this.renderMainContent()}
+        </div>
       </div>
+      ${this.renderAuthModal()}
     `;
   }
 }

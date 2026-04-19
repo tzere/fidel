@@ -192,6 +192,18 @@ export class ListenMatchFeature {
       `;
     }).join('');
 
+    const titleText = this.store.getText('challenge.title', {}, activeProfile);
+    const titleEnglish = this.store.getEnglishSupportText('challenge.title', {}, activeProfile);
+    const introText = this.store.getText('challenge.intro', {}, activeProfile);
+    const introEnglish = this.store.getEnglishSupportText('challenge.intro', {}, activeProfile);
+    const unlockEnglish = typeof challenge.unlockReadyVariantIndex === 'number'
+      ? this.store.getEnglishSupportText('challenge.unlockBody', {
+          nextVariantName: VARIANT_NAMES[challenge.unlockReadyVariantIndex]
+        }, activeProfile)
+      : '';
+    const finalEnglish = challenge.courseCompleted
+      ? this.store.getEnglishSupportText('challenge.finalBody', {}, activeProfile)
+      : '';
     const message = !audioReady
       ? this.store.getText('challenge.loadingMessage', {}, activeProfile)
       : targetPrepared
@@ -216,6 +228,7 @@ export class ListenMatchFeature {
           <p class='activity-copy'>${this.store.getText('challenge.unlockBody', {
             nextVariantName: VARIANT_NAMES[challenge.unlockReadyVariantIndex]
           }, activeProfile)}</p>
+          ${unlockEnglish ? `<p class='english-copy'>${unlockEnglish}</p>` : ''}
           <div class='activity-actions'>
             <button class='primary-btn' type='button' data-action='challenge-unlock'>Unlock ${VARIANT_NAMES[challenge.unlockReadyVariantIndex]}</button>
           </div>
@@ -227,6 +240,7 @@ export class ListenMatchFeature {
             <div class='activity-badge'>All Variants Complete</div>
             <h3 class='activity-title'>Final celebration unlocked.</h3>
             <p class='activity-copy'>${this.store.getText('challenge.finalBody', {}, activeProfile)}</p>
+            ${finalEnglish ? `<p class='english-copy'>${finalEnglish}</p>` : ''}
           </div>
         `
         : '';
@@ -235,8 +249,10 @@ export class ListenMatchFeature {
       <section class='workspace'>
         <div class='workspace-top'>
           <div>
-            <h2 class='view-title'>${this.store.getText('challenge.title', {}, activeProfile)}</h2>
-            <p class='panel-copy'>${this.store.getText('challenge.intro', {}, activeProfile)}</p>
+            <h2 class='view-title'>${titleText}</h2>
+            ${titleEnglish ? `<p class='english-copy'>${titleEnglish}</p>` : ''}
+            <p class='panel-copy'>${introText}</p>
+            ${introEnglish ? `<p class='english-copy'>${introEnglish}</p>` : ''}
           </div>
           <div class='mode-nav'>
             <button class='secondary-btn' type='button' data-action='challenge-play'>Play Prompt</button>

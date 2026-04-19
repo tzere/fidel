@@ -192,6 +192,24 @@ export const COPY_SECTIONS = [
         defaultText: 'Open variant tabs and start listening practice immediately.'
       }),
       learnerField({
+        key: 'home.additionalTitle',
+        label: 'More letters card title',
+        help: 'Title shown above the More Letters activity card on the home page.',
+        defaultText: 'Learn Additional Tigrinya Letters'
+      }),
+      learnerField({
+        key: 'home.additionalCopy',
+        label: 'More letters activity card',
+        help: 'Text shown under the More Letters card on the home page.',
+        defaultText: 'Practice the extra Tigrinya letter sets one family at a time with Learn and Drag & Drop.'
+      }),
+      sharedField({
+        key: 'home.additionalButtonLabel',
+        label: 'More letters button label',
+        help: 'Label shown on the home-page button that opens the More Letters page.',
+        defaultText: 'Open More Letters'
+      }),
+      learnerField({
         key: 'home.snapshotTitle',
         label: 'Snapshot title',
         help: 'The heading shown above the learner snapshot panel.',
@@ -269,6 +287,50 @@ export const COPY_SECTIONS = [
         label: 'Drag and drop instruction',
         help: 'Shown above the slots while a row is active. You can use {rowLabel} and {partLabel}.',
         defaultText: 'Drag each letter of the {rowLabel} family into the correct variant position.'
+      }),
+      learnerField({
+        key: 'additional.title',
+        label: 'More letters title',
+        help: 'Main title for the More Letters page.',
+        defaultText: 'More Letters'
+      }),
+      learnerField({
+        key: 'additional.intro',
+        label: 'More letters introduction',
+        help: 'You can use {name} and {learnerType} if needed.',
+        defaultText: 'Practice the extra Tigrinya letter sets one family at a time with a simple Learn mode and a lighter Drag & Drop review.',
+        femaleText: '',
+        maleText: ''
+      }),
+      learnerField({
+        key: 'additional.learnHelper',
+        label: 'More letters learn helper',
+        help: 'Shown under the current set in the Learn tab.',
+        defaultText: 'Tap any letter in this set to hear it.'
+      }),
+      sharedField({
+        key: 'additional.learnTabLabel',
+        label: 'More letters Learn tab label',
+        help: 'Label shown on the Learn tab button.',
+        defaultText: 'Learn'
+      }),
+      sharedField({
+        key: 'additional.dragdropTabLabel',
+        label: 'More letters Drag & Drop tab label',
+        help: 'Label shown on the Drag & Drop tab button.',
+        defaultText: 'Drag & Drop'
+      }),
+      sharedField({
+        key: 'additional.replayLabel',
+        label: 'More letters replay button',
+        help: 'Label shown on the replay button in the Learn tab.',
+        defaultText: 'Replay Current'
+      }),
+      sharedField({
+        key: 'additional.shuffleLabel',
+        label: 'More letters shuffle button',
+        help: 'Label shown on the shuffle button in the Drag & Drop tab.',
+        defaultText: 'Shuffle Again'
       }),
       learnerField({
         key: 'challenge.title',

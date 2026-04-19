@@ -1,13 +1,13 @@
 import { applyCopyPatch, createDefaultCopyState, mergeCopyWithDefaults, resolveCopy } from './content-service.js';
 import { DEFAULT_THEME_ID, normalizeThemeId } from './theme-service.js';
-import { createEmptyMastery, VARIANT_NAMES } from '../data/fidelat-data.js';
+import { ADDITIONAL_LETTER_GROUPS, createDefaultAdditionalLettersState, createEmptyMastery, VARIANT_NAMES } from '../data/fidelat-data.js';
 
 const SESSION_KEY = 'fidelat-studio-session-v1';
 const ADMIN_KEY = 'fidelat-studio-admin-v1';
 const LEGACY_KEY = 'geez-fidelat-progress-v10';
 const PROFILE_PROGRESS_PREFIX = 'fidelat-studio-progress-v2';
 const GUEST_PROFILE_ID = 'guest-local';
-const ACTIVE_VIEWS = new Set(['home', 'explorer', 'dragdrop', 'challenge']);
+const ACTIVE_VIEWS = new Set(['home', 'explorer', 'dragdrop', 'challenge', 'additionalLetters']);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function createEmptyProgressMastery() {
@@ -50,6 +50,27 @@ function normalizePart(value) {
   return value === 2 ? 2 : 1;
 }
 
+function normalizeAdditionalLettersTab(value) {
+  return value === 'dragdrop' ? 'dragdrop' : 'learn';
+}
+
+function normalizeAdditionalLettersGroupId(value) {
+  return ADDITIONAL_LETTER_GROUPS.some((group) => group.id === value)
+    ? value
+    : (ADDITIONAL_LETTER_GROUPS[0]?.id || null);
+}
+
+function normalizeAdditionalLettersHeardSets(heardSets) {
+  const defaults = Object.fromEntries(ADDITIONAL_LETTER_GROUPS.map((group) => [group.id, []]));
+  if (!heardSets || typeof heardSets !== 'object') return defaults;
+
+  ADDITIONAL_LETTER_GROUPS.forEach((group) => {
+    defaults[group.id] = normalizeArray(heardSets[group.id]);
+  });
+
+  return defaults;
+}
+
 export function createDefaultProgressState() {
   return {
     activeView: 'home',
@@ -86,7 +107,8 @@ export function createDefaultProgressState() {
       unlockReadyVariantIndex: null,
       courseCompleted: false,
       celebrationText: ''
-    }
+    },
+    additionalLetters: createDefaultAdditionalLettersState()
   };
 }
 
@@ -210,7 +232,8 @@ export class StorageService {
 
     safe.guestProfile = normalizeGuestProfile(session.guestProfile);
     safe.activeProfileId = typeof session.activeProfileId === 'string' ? session.activeProfileId : null;
-    safe.themeId = normalizeThemeId(session.themeId);
+    const storedThemeId = typeof session.themeId === 'string' ? session.themeId : '';
+    safe.themeId = normalizeThemeId(storedThemeId === 'orange' ? 'green' : storedThemeId);
 
     if (safe.activeProfileId === GUEST_PROFILE_ID) {
       if (!safe.guestProfile) safe.activeProfileId = null;
@@ -759,6 +782,14 @@ export class StorageService {
       challenge: {
         ...defaults.challenge,
         ...(progress?.challenge || {})
+      },
+      additionalLetters: {
+        ...defaults.additionalLetters,
+        ...(progress?.additionalLetters || {}),
+        heardSets: {
+          ...defaults.additionalLetters.heardSets,
+          ...(progress?.additionalLetters?.heardSets || {})
+        }
       }
     };
 
@@ -778,6 +809,23 @@ export class StorageService {
       part1: Array.isArray(merged.dragdrop.completedRows.part1) ? merged.dragdrop.completedRows.part1 : [],
       part2: Array.isArray(merged.dragdrop.completedRows.part2) ? merged.dragdrop.completedRows.part2 : []
     };
+
+    merged.additionalLetters.groupId = normalizeAdditionalLettersGroupId(merged.additionalLetters.groupId);
+    merged.additionalLetters.tab = normalizeAdditionalLettersTab(merged.additionalLetters.tab);
+    merged.additionalLetters.selectedSymbol = merged.additionalLetters.selectedSymbol || null;
+    merged.additionalLetters.lastPlayedSymbol = merged.additionalLetters.lastPlayedSymbol || null;
+    merged.additionalLetters.heardSets = normalizeAdditionalLettersHeardSets(merged.additionalLetters.heardSets);
+    merged.additionalLetters.shuffledSymbols = Array.isArray(merged.additionalLetters.shuffledSymbols)
+      ? merged.additionalLetters.shuffledSymbols
+      : [];
+    merged.additionalLetters.placedSymbols = Array.isArray(merged.additionalLetters.placedSymbols)
+      ? merged.additionalLetters.placedSymbols
+      : [];
+    merged.additionalLetters.selectedDragSymbol = merged.additionalLetters.selectedDragSymbol || null;
+    merged.additionalLetters.completedGroupIds = normalizeArray(merged.additionalLetters.completedGroupIds)
+      .filter((groupId) => ADDITIONAL_LETTER_GROUPS.some((group) => group.id === groupId));
+    merged.additionalLetters.lastOutcome = merged.additionalLetters.lastOutcome || null;
+    merged.additionalLetters.celebrationText = merged.additionalLetters.celebrationText || '';
 
     merged.challenge.variantIndex = clampVariantIndex(merged.challenge.variantIndex);
     merged.challenge.part = normalizePart(merged.challenge.part);

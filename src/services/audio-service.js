@@ -4,15 +4,48 @@ export class AudioService {
     this.currentAudio = null;
   }
 
-  async loadAudioMap() {
-    const response = await fetch('sounds.json', { cache: 'no-store' });
-    if (!response.ok) throw new Error('Could not load sounds.json');
+  resolveAudioPath(path, baseDir = '') {
+    const trimmed = String(path || '').trim();
+    if (!trimmed) return '';
+    if (!baseDir) return trimmed;
+    if (/^(?:[a-z]+:|\/)/i.test(trimmed)) return trimmed;
+    return `${baseDir.replace(/\/?$/, '/')}${trimmed.replace(/^\.\//, '')}`;
+  }
+
+  async loadAudioSourceMap(url, options = {}) {
+    const { optional = false, baseDir = '' } = options;
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) {
+      if (optional) return {};
+      throw new Error(`Could not load ${url}`);
+    }
 
     const payload = await response.json();
     const rawMap = payload.symbols && typeof payload.symbols === 'object' ? payload.symbols : payload;
-    this.audioMap = Object.fromEntries(
-      Object.entries(rawMap).filter(([, value]) => typeof value === 'string' && value.trim())
+    return Object.fromEntries(
+      Object.entries(rawMap)
+        .filter(([, value]) => typeof value === 'string' && value.trim())
+        .map(([symbol, value]) => [symbol, this.resolveAudioPath(value, baseDir)])
     );
+  }
+
+  async loadAudioMap() {
+    const mainMap = await this.loadAudioSourceMap('sounds.json');
+    let extraMap = {};
+
+    try {
+      extraMap = await this.loadAudioSourceMap('extra-letters/sounds.json', {
+        optional: true,
+        baseDir: 'extra-letters'
+      });
+    } catch {
+      extraMap = {};
+    }
+
+    this.audioMap = {
+      ...mainMap,
+      ...extraMap
+    };
 
     return this.audioMap;
   }

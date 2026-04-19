@@ -221,6 +221,10 @@ export class DragDropFeature {
     const rowLabel = currentRow[0] || '?';
     const partLabel = this.getPartLabel(dragdrop.part);
     const showCelebration = dragdrop.lastOutcome === 'correct' && Boolean(dragdrop.celebrationText);
+    const titleText = this.store.getText('dragdrop.title', {}, activeProfile);
+    const titleEnglish = this.store.getEnglishSupportText('dragdrop.title', {}, activeProfile);
+    const introText = this.store.getText('dragdrop.intro', {}, activeProfile);
+    const introEnglish = this.store.getEnglishSupportText('dragdrop.intro', {}, activeProfile);
 
     const celebrationMarkup = showCelebration
       ? `
@@ -242,8 +246,10 @@ export class DragDropFeature {
       <section class='workspace'>
         <div class='workspace-top'>
           <div>
-            <h2 class='view-title'>${this.store.getText('dragdrop.title', {}, activeProfile)}</h2>
-            <p class='panel-copy'>${this.store.getText('dragdrop.intro', {}, activeProfile)}</p>
+            <h2 class='view-title'>${titleText}</h2>
+            ${titleEnglish ? `<p class='english-copy'>${titleEnglish}</p>` : ''}
+            <p class='panel-copy'>${introText}</p>
+            ${introEnglish ? `<p class='english-copy'>${introEnglish}</p>` : ''}
           </div>
           <div class='mode-nav'>
             <button class='ghost-btn' type='button' data-action='dragdrop-restart-row'>Shuffle Again</button>
