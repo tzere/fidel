@@ -328,7 +328,7 @@ export class StorageService {
       throw new Error('Learner name should be at least 2 characters.');
     }
 
-    if (!validateEmail(safeEmail)) {
+    if (safeEmail && !validateEmail(safeEmail)) {
       throw new Error('Enter a valid email address for the learner.');
     }
 
@@ -349,9 +349,11 @@ export class StorageService {
       throw new Error('That learner name already exists. Please choose a different one.');
     }
 
-    const duplicateEmail = session.profiles.find((profile) => profile.email && profile.email === safeEmail);
-    if (duplicateEmail) {
-      throw new Error('That learner email already exists. Please choose a different one.');
+    if (safeEmail) {
+      const duplicateEmail = session.profiles.find((profile) => profile.email && profile.email === safeEmail);
+      if (duplicateEmail) {
+        throw new Error('That learner email already exists. Please choose a different one.');
+      }
     }
 
     const now = new Date().toISOString();
@@ -601,7 +603,7 @@ export class StorageService {
       throw new Error('Learner name should be at least 2 characters.');
     }
 
-    if (!validateEmail(safeEmail)) {
+    if (safeEmail && !validateEmail(safeEmail)) {
       throw new Error('Enter a valid email address for the learner.');
     }
 
@@ -620,11 +622,13 @@ export class StorageService {
       throw new Error('That learner name already exists. Please choose a different one.');
     }
 
-    const duplicateEmail = session.profiles.find(
-      (profile) => profile.id !== profileId && profile.email && profile.email === safeEmail
-    );
-    if (duplicateEmail) {
-      throw new Error('That learner email already exists. Please choose a different one.');
+    if (safeEmail) {
+      const duplicateEmail = session.profiles.find(
+        (profile) => profile.id !== profileId && profile.email && profile.email === safeEmail
+      );
+      if (duplicateEmail) {
+        throw new Error('That learner email already exists. Please choose a different one.');
+      }
     }
 
     session.profiles = session.profiles.map((profile) => (

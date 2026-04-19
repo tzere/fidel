@@ -943,10 +943,6 @@ class FidelatApp {
             <input class='field-input' name='name' type='text' placeholder='Example: Meron' required />
           </label>
           <label>
-            <span class='field-label'>Email</span>
-            <input class='field-input' name='email' type='email' placeholder='meron@example.com' required />
-          </label>
-          <label>
             <span class='field-label'>M/F</span>
             <select class='selector' name='sex' required>
               <option value=''>Choose one</option>
@@ -1280,7 +1276,7 @@ class FidelatApp {
                     </label>
                     <label class='admin-field'>
                       <span class='field-label'>Email</span>
-                      <input class='field-input' name='email' type='email' value="${this.escapeAttribute(profile.email || '')}" required />
+                      <input class='field-input' name='email' type='email' value="${this.escapeAttribute(profile.email || '')}" />
                     </label>
                     <label class='admin-field'>
                       <span class='field-label'>M/F</span>
