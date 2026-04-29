@@ -7,6 +7,7 @@ const ADMIN_KEY = 'fidelat-studio-admin-v1';
 const LEGACY_KEY = 'geez-fidelat-progress-v10';
 const PROFILE_PROGRESS_PREFIX = 'fidelat-studio-progress-v2';
 const GUEST_PROFILE_ID = 'guest-local';
+const DEFAULT_LOCAL_LEARNER_NAME = 'Learner';
 const ACTIVE_VIEWS = new Set(['home', 'explorer', 'dragdrop', 'challenge', 'additionalLetters']);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -184,7 +185,7 @@ function normalizeGuestProfile(profile) {
     localOnly: true
   };
 
-  if (normalized.name.length < 2 || normalized.sex === 'unspecified') {
+  if (normalized.name.length < 2) {
     return null;
   }
 
@@ -313,6 +314,48 @@ export class StorageService {
       session,
       admin,
       progress: this.mergeProgressWithDefaults(currentState?.progress || createDefaultProgressState())
+    };
+    this.save(state);
+    return state;
+  }
+
+  ensureLearnerSession(currentState) {
+    const session = this.normalizeSession(currentState?.session || this.loadSession());
+    const admin = this.normalizeAdmin(currentState?.admin || this.loadAdmin());
+    const activeProfile = this.getActiveProfileFromSession(session);
+
+    if (activeProfile) {
+      const state = {
+        session,
+        admin,
+        progress: currentState?.progress
+          ? this.mergeProgressWithDefaults(currentState.progress)
+          : this.loadProfileProgress(activeProfile.id)
+      };
+      this.save(state);
+      return state;
+    }
+
+    const now = new Date().toISOString();
+    const previousGuest = session.guestProfile;
+    session.guestProfile = {
+      id: GUEST_PROFILE_ID,
+      name: previousGuest?.name || DEFAULT_LOCAL_LEARNER_NAME,
+      email: '',
+      pin: '',
+      sex: previousGuest?.sex || 'unspecified',
+      createdAt: previousGuest?.createdAt || now,
+      lastLoginAt: now,
+      kind: 'guest',
+      localOnly: true
+    };
+    session.activeProfileId = GUEST_PROFILE_ID;
+    admin.loggedIn = false;
+
+    const state = {
+      session,
+      admin,
+      progress: this.loadProfileProgress(GUEST_PROFILE_ID)
     };
     this.save(state);
     return state;

@@ -76,6 +76,10 @@ export class ProgressStore {
     this.state = this.storage.updateTheme(themeId, this.state);
   }
 
+  ensureLearnerSession() {
+    this.state = this.storage.ensureLearnerSession(this.state);
+  }
+
   getText(key, variables = {}, profile = this.getActiveProfile()) {
     return this.storage.getText(this.state, key, profile, variables);
   }

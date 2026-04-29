@@ -8,6 +8,8 @@ import { AudioService } from './src/services/audio-service.js';
 import { StorageService } from './src/services/storage-service.js';
 import { THEME_OPTIONS, getThemeFrameVars } from './src/services/theme-service.js';
 
+const LEARNER_LOGIN_ENABLED = false;
+
 class FidelatApp {
   constructor(root) {
     this.root = root;
@@ -52,6 +54,10 @@ class FidelatApp {
   }
 
   async init() {
+    if (!LEARNER_LOGIN_ENABLED && this.route !== 'admin') {
+      this.store.ensureLearnerSession();
+    }
+
     this.attachEvents();
     this.render();
 
@@ -276,7 +282,11 @@ class FidelatApp {
       return;
     }
 
-    if (!this.store.hasActiveProfile()) {
+    if (!LEARNER_LOGIN_ENABLED && !this.store.hasActiveProfile()) {
+      this.store.ensureLearnerSession();
+    }
+
+    if (LEARNER_LOGIN_ENABLED && !this.store.hasActiveProfile()) {
       if (view === 'home') {
         this.authModal = null;
         this.store.setActiveView('home');
@@ -837,12 +847,14 @@ class FidelatApp {
     const profileName = adminRoute
       ? adminActive ? 'Content and learner controls' : 'Admin sign-in'
       : activeProfile
-        ? this.store.isGuestProfile(activeProfile) ? `${activeProfile.name} (Guest)` : activeProfile.name
-        : 'Login, register, or continue as guest';
+        ? LEARNER_LOGIN_ENABLED
+          ? this.store.isGuestProfile(activeProfile) ? `${activeProfile.name} (Guest)` : activeProfile.name
+          : 'Learner mode'
+        : LEARNER_LOGIN_ENABLED ? 'Login, register, or continue as guest' : 'Learner mode';
 
     const actionButton = adminRoute
       ? adminActive ? `<button class='ghost-btn' type='button' data-action='admin-logout'>Log out admin</button>` : ''
-      : activeProfile
+      : LEARNER_LOGIN_ENABLED && activeProfile
         ? `<button class='ghost-btn' type='button' data-action='logout'>${this.store.isGuestProfile(activeProfile) ? 'Leave Guest Session' : 'Log Out'}</button>`
         : '';
 
@@ -883,6 +895,7 @@ class FidelatApp {
   }
 
   renderAuthLauncher() {
+    if (!LEARNER_LOGIN_ENABLED) return '';
     if (this.store.hasActiveProfile()) return '';
 
     return `
@@ -899,6 +912,7 @@ class FidelatApp {
   }
 
   renderAuthModal() {
+    if (!LEARNER_LOGIN_ENABLED) return '';
     if (!this.authModal) return '';
 
     const mode = this.authModal.mode || 'login';
