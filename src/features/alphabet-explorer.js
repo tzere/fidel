@@ -12,7 +12,7 @@ export class AlphabetExplorerFeature {
 
   selectVariant(variantIndex) {
     const part = this.getPreferredPart(variantIndex);
-    this.store.updateExplorer({ variantIndex, part, selectedSymbol: null, lastPlayedSymbol: null });
+    this.store.updateExplorer({ variantIndex, part, selectedSymbol: null, lastPlayedSymbol: null, reviewSymbols: null });
     return part;
   }
 
@@ -22,24 +22,29 @@ export class AlphabetExplorerFeature {
       throw new Error('Finish the first explorer part before opening the second one.');
     }
 
-    this.store.updateExplorer({ part: 2, selectedSymbol: null, lastPlayedSymbol: null });
+    this.store.updateExplorer({ part: 2, selectedSymbol: null, lastPlayedSymbol: null, reviewSymbols: null });
   }
 
   reviewFirstPart() {
-    this.store.updateExplorer({ part: 1, selectedSymbol: null, lastPlayedSymbol: null });
+    this.store.updateExplorer({ part: 1, selectedSymbol: null, lastPlayedSymbol: null, reviewSymbols: [] });
   }
 
   async playSymbol(symbol) {
-    const { variantIndex, part } = this.store.getProgress().explorer;
+    const { variantIndex, part, reviewSymbols } = this.store.getProgress().explorer;
     await this.audio.playSymbol(symbol);
     this.store.markExplorerSymbolHeard(variantIndex, part, symbol);
 
-    const partProgress = this.store.getExplorerProgress(variantIndex, part);
+    // Review tracks a fresh pass without clearing lifetime mastery or unlocks.
+    const reviewing = part === 1 && Array.isArray(reviewSymbols);
+    const partProgress = reviewing
+      ? [...new Set([...reviewSymbols, symbol])]
+      : this.store.getExplorerProgress(variantIndex, part);
+    if (reviewing) this.store.updateExplorer({ reviewSymbols: partProgress });
     const partTotal = this.store.getVariantSymbols(variantIndex, part).length;
     const partComplete = partProgress.length >= partTotal;
 
     if (part === 1 && partComplete) {
-      this.store.updateExplorer({ part: 2, selectedSymbol: null, lastPlayedSymbol: symbol });
+      this.store.updateExplorer({ part: 2, selectedSymbol: null, lastPlayedSymbol: symbol, reviewSymbols: null });
       return {
         status: 'part-advanced',
         message: this.store.getText('explorer.partAdvanceMessage', {
@@ -77,7 +82,10 @@ export class AlphabetExplorerFeature {
     const introText = this.store.getText('explorer.intro', {}, activeProfile);
     const introEnglish = this.store.getEnglishSupportText('explorer.intro', {}, activeProfile);
     const firstPartComplete = this.store.isExplorerPartComplete(variantIndex, 1);
-    const partProgress = this.store.getExplorerProgress(variantIndex, part).length;
+    const reviewing = part === 1 && Array.isArray(explorer.reviewSymbols);
+    const partProgress = reviewing
+      ? explorer.reviewSymbols.length
+      : this.store.getExplorerProgress(variantIndex, part).length;
     const partTotal = symbols.length;
     const partLabel = part === 2 ? 'Part 2' : 'Part 1';
 
@@ -107,7 +115,7 @@ export class AlphabetExplorerFeature {
             </label>
             <div class='stat-strip compact-strip'>
               <div class='stat-pill'><strong>${partLabel}</strong>Current Part</div>
-              <div class='stat-pill'><strong>${partProgress}/${partTotal}</strong>Explored</div>
+              <div class='stat-pill'><strong>${partProgress}/${partTotal}</strong>${reviewing ? 'Reviewed' : 'Explored'}</div>
               <div class='stat-pill'><strong>${firstPartComplete ? 'Ready' : 'Learning'}</strong>Second Part</div>
             </div>
           </div>

@@ -80,6 +80,7 @@ export function createDefaultProgressState() {
       part: 1,
       selectedSymbol: null,
       lastPlayedSymbol: null,
+      reviewSymbols: null,
       mastery: createEmptyProgressMastery()
     },
     dragdrop: {
