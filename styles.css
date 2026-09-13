@@ -1168,3 +1168,102 @@ h1 {
     padding-top: 22px;
   }
 }
+
+/* Letter-first layout: generous learning targets, quiet supporting controls. */
+.page-shell { padding: clamp(10px, 2vw, 24px); }
+#app { max-width: 1200px; }
+.app-frame { padding: clamp(8px, 1.3vw, 16px); border-radius: 28px; }
+.studio-shell { padding: clamp(10px, 1.5vw, 18px); border-width: 1px; border-color: var(--line); border-radius: 22px; }
+.card { border-radius: 20px; box-shadow: 0 6px 22px rgba(29, 41, 48, 0.07); }
+.top-shell { grid-template-columns: minmax(0, 1fr) minmax(350px, 1fr); align-items: center; padding: 16px 18px; }
+.brand-block { gap: 3px; }
+h1 { font-size: clamp(1.65rem, 3vw, 2.4rem); line-height: 1.2; letter-spacing: -0.02em; }
+.eyebrow { width: fit-content; padding: 4px 9px; font-size: .68rem; }
+.hero-copy, .hero-english-copy { font-size: .86rem; margin-top: 2px; }
+.menu-side { gap: 8px; }
+.main-menu { display: flex; flex-wrap: wrap; overflow: visible; gap: 6px; }
+.menu-btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; min-height: 44px; flex: 1 0 auto; font-size: .95rem; border-radius: 12px; }
+.menu-btn.is-active { background: var(--accent-deep); color: #fff; border-color: var(--accent-deep); box-shadow: 0 3px 10px var(--accent-shadow); }
+.profile-bar { padding: 6px 10px; border-radius: 12px; }
+.profile-name { font-size: .88rem; }
+.profile-label { font-size: .65rem; }
+.theme-panel { padding: 5px 10px; border-radius: 12px; }
+.theme-inline { flex-direction: row; align-items: center; gap: 8px; }
+.theme-inline-label { font-size: .8rem; }
+.theme-select { min-width: 0; flex: 1 1 auto; min-height: 36px; font-size: .85rem; }
+.banner-card { padding: 8px 12px; font-size: .88rem; box-shadow: none; }
+.view-title, .section-title { font-size: 1.4rem; line-height: 1.4; }
+.panel-copy, .english-copy, .helper-copy { font-size: .9rem; }
+.stat-strip, .compact-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stat-pill { padding: 6px 9px; font-size: .76rem; border-radius: 12px; }
+.stat-pill strong { font-size: 1rem; }
+.metric { padding: 8px; }
+.metric-value { font-size: 1.3rem; }
+.symbol-display { min-height: 142px; font-size: clamp(5.5rem, 11vw, 8rem); line-height: 1.4; color: #2156a0; background: linear-gradient(120deg, #eef6ff, #f3efff); border-radius: 20px; }
+.symbol-display.is-placeholder { min-height: 54px; padding: 10px 14px; display: flex; justify-content: center; gap: 12px; font-size: 1.6rem; color: var(--muted); background: rgba(255,255,255,.5); }
+.placeholder-copy { font-size: .9rem; font-family: 'Segoe UI', sans-serif; }
+.symbol-caption { margin-bottom: 12px; }
+.letter-grid, .explorer-grid, .drag-bank { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; }
+.symbol-btn { min-height: 112px; padding: 8px; font-family: 'Noto Sans Ethiopic', 'Nyala', 'Abyssinica SIL', sans-serif; font-size: clamp(3.3rem, 5.5vw, 4.5rem); line-height: 1.4; color: #2156a0; background: #edf5ff; border: 1px solid #c9dcef; border-radius: 18px; box-shadow: 0 3px 0 rgba(29,41,48,.08); }
+.symbol-btn:nth-child(4n+2) { color: #7540a0; background: #f5effc; border-color: #dfd0ef; }
+.symbol-btn:nth-child(4n+3) { color: #156957; background: #eaf8f1; border-color: #c3e5d5; }
+.symbol-btn:nth-child(4n) { color: #9b441e; background: #fff3e8; border-color: #f0d9c4; }
+.symbol-btn:hover { box-shadow: 0 6px 14px rgba(29,41,48,.13); transform: translateY(-2px); }
+.symbol-btn.is-correct, .symbol-btn.is-complete { border: 3px solid #237049; color: #155438; background: #e2f4e8; }
+.drop-value { font-size: 4rem; line-height: 1.35; color: #2156a0; }
+.drop-slot { min-height: 134px; border-radius: 18px; }
+.pointer-drag-ghost { font-size: 3.5rem; }
+.additional-set-btn strong { font-size: 2.8rem; line-height: 1.35; color: #7540a0; }
+.additional-preview { font-size: 1.5rem; line-height: 1.65; color: #2156a0; }
+:where(a, button, select, input, textarea):focus-visible { outline: 3px solid #2156a0; outline-offset: 3px; }
+@media (max-width: 800px) {
+  .top-shell { grid-template-columns: 1fr; gap: 10px; }
+  .profile-bar { flex-direction: row; align-items: center; }
+  .workspace-top { gap: 8px; }
+  .letter-grid, .explorer-grid, .drag-bank { grid-template-columns: repeat(auto-fit, minmax(86px, 1fr)); gap: 9px; }
+  .symbol-btn { min-height: 100px; font-size: 3.5rem; }
+  .drop-grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+  .metrics, .metrics.two-up { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 400px) {
+  .top-shell { padding: 12px; }
+  .menu-btn { padding: 0 8px; font-size: .85rem; }
+  .letter-grid, .explorer-grid, .drag-bank { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .symbol-btn { font-size: 3rem; min-height: 88px; }
+  .stat-strip { gap: 4px; }
+  .stat-pill { padding: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+.drop-slot:not(.is-filled) .drop-value { font-size: 1.5rem; color: var(--muted); }
+.stat-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.compact-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 600px) {
+  .stat-strip:not(.compact-strip) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Bundle Ethiopic glyphs so learners do not depend on installed device fonts. */
+@font-face {
+  font-family: 'Noto Sans Ethiopic';
+  src: url('assets/fonts/NotoSansEthiopic.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+body:not([data-view='home']):not([data-view='admin']) .hero-copy,
+body:not([data-view='home']):not([data-view='admin']) .hero-english-copy { display: none; }
+body:not([data-view='home']):not([data-view='admin']) h1 { font-size: clamp(1.2rem, 2vw, 1.65rem); }
+@media (max-width: 600px) {
+  .main-menu { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+  .main-menu .menu-btn { padding: 0 3px; font-size: .78rem; }
+  .top-shell { padding: 12px; }
+  .brand-block { gap: 0; }
+  .eyebrow { font-size: .6rem; }
+}
+
+/* Keep colour names readable against a neutral picker background. */
+.theme-select { color: var(--theme-label-color, var(--text)); background: #fff; }
+
+/* The picker label stays neutral; only the colour names carry theme colours. */
+.theme-inline-label { color: var(--text); }

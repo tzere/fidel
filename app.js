@@ -9,6 +9,10 @@ import { StorageService } from './src/services/storage-service.js';
 import { THEME_OPTIONS, getThemeFrameVars } from './src/services/theme-service.js';
 
 const LEARNER_LOGIN_ENABLED = false;
+const SECTION_HASHES = Object.freeze({
+  home: 'home', explorer: 'learn', dragdrop: 'test1',
+  challenge: 'test2', additionalLetters: 'more'
+});
 
 class FidelatApp {
   constructor(root) {
@@ -59,6 +63,12 @@ class FidelatApp {
     }
 
     this.attachEvents();
+    if (this.route !== 'admin') {
+      const view = window.location.hash
+        ? this.getViewFromHash() || 'home'
+        : this.store.getProgress().activeView || 'home';
+      await this.openView(view, { history: 'replace' });
+    }
     this.render();
 
     try {
@@ -81,7 +91,26 @@ class FidelatApp {
     this.render();
   }
 
+  getViewFromHash() {
+    const hash = window.location.hash.slice(1).toLowerCase();
+    return Object.keys(SECTION_HASHES).find((view) => SECTION_HASHES[view] === hash);
+  }
+
+  syncSectionUrl(view, mode = 'push') {
+    const hash = `#${SECTION_HASHES[view]}`;
+    if (window.location.hash === hash) return;
+    const url = new URL(window.location.href);
+    url.hash = hash;
+    window.history[mode === 'replace' ? 'replaceState' : 'pushState'](null, '', url);
+  }
+
   attachEvents() {
+    window.addEventListener('hashchange', () => {
+      if (this.route !== 'admin') {
+        this.openView(this.getViewFromHash() || 'home', { history: 'replace' })
+          .catch((error) => this.setBanner('error', error.message));
+      }
+    });
     this.root.addEventListener('click', (event) => this.handleClick(event));
     this.root.addEventListener('change', (event) => this.handleChange(event));
     this.root.addEventListener('submit', (event) => this.handleSubmit(event));
@@ -272,6 +301,7 @@ class FidelatApp {
   }
 
   async openView(view, options = {}) {
+    if (view !== 'admin' && !Object.hasOwn(SECTION_HASHES, view)) view = 'home';
     if (view === 'admin') {
       this.goToAdminUrl();
       return;
@@ -308,7 +338,11 @@ class FidelatApp {
       return;
     }
 
+    this.audio.stop();
+    this.clearPointerDrag();
     this.store.setActiveView(view);
+    if (this.audioReady) this.banner = { tone: 'info', text: '' };
+    this.syncSectionUrl(view, options.history);
 
     if (view === 'challenge' && options.autoStart) {
       const { challenge } = this.store.getProgress();
@@ -492,8 +526,10 @@ class FidelatApp {
       }
 
       if (action === 'navigate') {
+        if (button.tagName === 'A' && (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button > 0)) return;
+        event.preventDefault();
         await this.openView(button.dataset.view, {
-          autoStart: button.dataset.view === 'challenge'
+          autoStart: button.dataset.view === 'challenge' && this.audioReady
         });
         return;
       }
@@ -795,14 +831,15 @@ class FidelatApp {
 
   renderThemePicker() {
     const activeThemeId = this.store.getTheme();
+    const activeTheme = THEME_OPTIONS.find((theme) => theme.id === activeThemeId) || THEME_OPTIONS[0];
 
     return `
       <section class='theme-panel' aria-label='Frame themes'>
         <label class='theme-inline'>
-          <span class='theme-inline-label'>Choose theme</span>
-          <select class='selector theme-select' data-action='theme-select' aria-label='Choose frame theme'>
+          <span class='theme-inline-label'>Your fav color</span>
+          <select class='selector theme-select' data-action='theme-select' aria-label='Your fav color' style='--theme-label-color: ${activeTheme.textColor}'>
             ${THEME_OPTIONS.map((theme) => `
-              <option value='${theme.id}' ${theme.id === activeThemeId ? 'selected' : ''}>${theme.label}</option>
+              <option value='${theme.id}' style='color: ${theme.textColor}' ${theme.id === activeThemeId ? 'selected' : ''}>${theme.label}</option>
             `).join('')}
           </select>
         </label>
@@ -833,7 +870,7 @@ class FidelatApp {
       : `
         <nav class='main-menu' aria-label='Main menu'>
           ${items.map(([view, label]) => `
-            <button class='menu-btn ${activeView === view ? 'is-active' : ''}' type='button' data-action='navigate' data-view='${view}'>${label}</button>
+            <a class='menu-btn ${activeView === view ? 'is-active' : ''}' href='#${SECTION_HASHES[view]}' data-action='navigate' data-view='${view}' ${activeView === view ? "aria-current='page'" : ''}>${label}</a>
           `).join('')}
         </nav>
       `;
@@ -871,13 +908,13 @@ class FidelatApp {
         </div>
         <div class='menu-side'>
           ${navigation}
-          <div class='profile-bar'>
+          ${adminRoute || LEARNER_LOGIN_ENABLED ? `<div class='profile-bar'>
             <div>
               <div class='profile-label'>${roleLabel}</div>
               <div class='profile-name'>${profileName}</div>
             </div>
             ${actionButton}
-          </div>
+          </div>` : ''}
           ${this.renderThemePicker()}
         </div>
       </header>
@@ -888,7 +925,7 @@ class FidelatApp {
     if (!this.banner.text) return '';
 
     return `
-      <section class='banner-card card ${this.banner.tone === 'success' ? 'is-success' : this.banner.tone === 'error' ? 'is-error' : ''}'>
+      <section role='status' aria-live='polite' class='banner-card card ${this.banner.tone === 'success' ? 'is-success' : this.banner.tone === 'error' ? 'is-error' : ''}'>
         <div class='message'>${this.banner.text}</div>
       </section>
     `;
@@ -1393,6 +1430,9 @@ class FidelatApp {
   }
 
   render() {
+    const focused = this.root.contains(document.activeElement) ? document.activeElement : null;
+    const focusData = focused?.dataset.action ? { ...focused.dataset } : null;
+    document.body.dataset.view = this.route === 'admin' ? 'admin' : this.store.getProgress().activeView;
     this.updateDocumentTitle();
     this.applyTheme();
     this.root.innerHTML = `
@@ -1405,6 +1445,11 @@ class FidelatApp {
       </div>
       ${this.renderAuthModal()}
     `;
+    if (focusData) {
+      const replacement = [...this.root.querySelectorAll('[data-action]')].find((element) =>
+        Object.entries(focusData).every(([key, value]) => element.dataset[key] === value));
+      replacement?.focus({ preventScroll: true });
+    }
   }
 }
 

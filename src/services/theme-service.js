@@ -80,6 +80,7 @@ function createEdiyatPatternDataUri(colors) {
 export const THEME_OPTIONS = [
   {
     id: 'red',
+    textColor: '#b4232b',
     label: 'Red',
     description: 'Bright red',
     frame: {
@@ -100,6 +101,7 @@ export const THEME_OPTIONS = [
   },
   {
     id: 'purple',
+    textColor: '#7540a0',
     label: 'Purple',
     description: 'Playful purple',
     frame: {
@@ -120,6 +122,7 @@ export const THEME_OPTIONS = [
   },
   {
     id: 'gray',
+    textColor: '#59636e',
     label: 'Gray',
     description: 'Calm stone',
     frame: {
@@ -140,6 +143,7 @@ export const THEME_OPTIONS = [
   },
   {
     id: 'blue',
+    textColor: '#2156a0',
     label: 'Blue',
     description: 'Sky blue',
     frame: {
@@ -160,6 +164,7 @@ export const THEME_OPTIONS = [
   },
   {
     id: 'orange',
+    textColor: '#a7470b',
     label: 'Orange',
     description: 'Sunny orange',
     frame: {
@@ -180,6 +185,7 @@ export const THEME_OPTIONS = [
   },
   {
     id: 'green',
+    textColor: '#216e32',
     label: 'Green',
     description: 'Fresh green',
     frame: {

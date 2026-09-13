@@ -91,7 +91,7 @@ export class AlphabetExplorerFeature {
             ${introEnglish ? `<p class='english-copy'>${introEnglish}</p>` : ''}
           </div>
           <div class='mode-nav'>
-            <button class='secondary-btn' type='button' data-action='explorer-replay'>Replay Current</button>
+            <button class='secondary-btn' type='button' data-action='explorer-replay' ${!selectedSymbol && !lastPlayedSymbol ? 'disabled' : ''}>Replay Current</button>
           </div>
         </div>
 
@@ -122,7 +122,7 @@ export class AlphabetExplorerFeature {
             `
             : ''}
 
-          <div class='symbol-display'>${activeSymbol}</div>
+          <div class='symbol-display ${activeSymbol === '?' ? 'is-placeholder' : ''}' aria-live='polite'>${activeSymbol === '?' ? '<span aria-hidden="true">?</span><span class="placeholder-copy">Choose a letter to hear its sound</span>' : activeSymbol}</div>
           <div class='symbol-caption'>
             <div>
               <strong>${VARIANT_NAMES[variantIndex]} - ${partLabel}</strong>

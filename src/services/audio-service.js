@@ -1,3 +1,6 @@
+const APP_ROOT = new URL('../../', import.meta.url);
+const AUDIO_VERSION = 'kids-voice-20260913-v2';
+
 export class AudioService {
   constructor() {
     this.audioMap = {};
@@ -14,7 +17,7 @@ export class AudioService {
 
   async loadAudioSourceMap(url, options = {}) {
     const { optional = false, baseDir = '' } = options;
-    const response = await fetch(url, { cache: 'no-store' });
+    const response = await fetch(new URL(url, APP_ROOT), { cache: 'no-store' });
     if (!response.ok) {
       if (optional) return {};
       throw new Error(`Could not load ${url}`);
@@ -67,7 +70,9 @@ export class AudioService {
 
   async playSource(path) {
     this.stop();
-    const audio = new Audio(path);
+    const url = new URL(path, APP_ROOT);
+    url.searchParams.set('v', AUDIO_VERSION);
+    const audio = new Audio(url.href);
     this.currentAudio = audio;
     await audio.play();
     return path;
@@ -102,7 +107,7 @@ export class AudioService {
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = options.rate ?? 0.92;
-    utterance.pitch = options.pitch ?? 1.02;
+    utterance.pitch = options.pitch ?? 1.45;
     utterance.lang = options.lang ?? 'ti-ER';
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
