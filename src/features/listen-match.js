@@ -277,7 +277,7 @@ export class ListenMatchFeature {
             </div>
           </div>
 
-          <div class='variant-grid'>${variantButtons}</div>
+          <details class='variant-directory'><summary>Variant progress</summary><div class='variant-grid'>${variantButtons}</div></details>
 
           <div class='message-box ${challenge.lastOutcome === 'correct' ? 'is-success' : challenge.lastOutcome === 'wrong' ? 'is-error' : ''}'>
             <div class='message'>

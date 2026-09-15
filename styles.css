@@ -1267,3 +1267,56 @@ body:not([data-view='home']):not([data-view='admin']) h1 { font-size: clamp(1.2r
 
 /* The picker label stays neutral; only the colour names carry theme colours. */
 .theme-inline-label { color: var(--text); }
+
+/* Deep practice links and a compact, activity-first layout. */
+.appearance, .practice-instructions, .practice-progress, .set-directory, .variant-directory { font-size: .88rem; }
+summary { cursor: pointer; padding: 8px 4px; min-height: 40px; font-weight: 700; }
+summary:focus-visible { outline: 3px solid #2156a0; outline-offset: 2px; }
+.practice-instructions[open] p { margin: 6px 0; }
+.practice-progress[open] { margin-bottom: 10px; }
+.appearance .theme-panel { margin-top: 4px; }
+@media (max-width: 720px) {
+  body:not([data-view='home']):not([data-view='admin']) .brand-block { display: none; }
+  body:not([data-view='home']):not([data-view='admin']) .top-shell { padding: 6px 8px; }
+  body:not([data-view='home']):not([data-view='admin']) .page-shell { padding: 4px; }
+  body:not([data-view='home']):not([data-view='admin']) .app-frame { padding: 4px; }
+  body:not([data-view='home']):not([data-view='admin']) .studio-shell { padding: 8px; gap: 6px; }
+  .menu-side { gap: 0; }
+  .appearance > summary { min-height: 30px; padding: 5px 2px; font-size: .78rem; }
+  .workspace { gap: 6px; }
+  .workspace-top { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .workspace-top > div:first-child { flex: 1; }
+  .view-title { font-size: 1.1rem; margin: 0; }
+  .practice-instructions summary { min-height: 32px; padding: 5px 0; font-size: .8rem; }
+  .workspace-top .mode-nav button { min-height: 42px; font-size: .8rem; padding: 0 10px; }
+  .panel-card { padding: 8px; }
+  .panel-card:has(> .explorer-grid), .panel-card:has(> .drag-bank), .panel-card:has(> .letter-grid) { display: flex; flex-direction: column; gap: 6px; }
+  .panel-card > .explorer-grid, .panel-card > .letter-grid { order: 0; }
+  .panel-card > .selector-row, .panel-card > .practice-progress, .panel-card > .symbol-display, .panel-card > .symbol-caption, .panel-card > .variant-directory { order: 2; }
+  .panel-card > .selector-row { margin: 0; }
+  .panel-card > .symbol-display { min-height: 80px; font-size: 4rem; margin: 0; }
+  .panel-card > .symbol-display.is-placeholder { min-height: 40px; font-size: 1.4rem; }
+  .panel-card > .symbol-caption { margin: 0; }
+  .drag-bank { margin-top: 6px; }
+  .drop-grid { margin-top: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+  .drop-slot { min-height: 82px; padding: 5px; border-radius: 12px; }
+  .drop-label { font-size: .7rem; letter-spacing: 0; overflow-wrap: anywhere; }
+  .drop-value { font-size: 2.5rem; }
+  .additional-tabs { margin: 0; }
+  .symbol-btn { min-height: 86px; }
+}
+@media (max-width: 720px) {
+  .panel-card > .drag-bank { order: -1; }
+  .panel-card:has(> .drag-bank) > .message-box { order: -2; }
+  .workspace > .set-directory { order: 3; }
+}
+@media (max-width: 720px) {
+  .panel-card > .letter-grid { order: -1; }
+}
+
+@media (max-width: 720px) {
+  .panel-card > .selector-row { order: -2; align-items: center; }
+  .panel-card > .selector-row > label { display: flex; align-items: center; gap: 8px; }
+  .panel-card > .selector-row > label > br { display: none; }
+  .panel-card > .selector-row .selector { width: auto; }
+}

@@ -86,6 +86,18 @@ export class AudioService {
     return this.playSource(this.audioMap[symbol]);
   }
 
+  waitForCurrentAudio() {
+    const audio = this.currentAudio;
+    if (!audio || audio.ended || audio.paused) return Promise.resolve();
+    return new Promise(resolve => {
+      const finish = () => {
+        ['ended', 'pause', 'error'].forEach(event => audio.removeEventListener(event, finish));
+        resolve();
+      };
+      ['ended', 'pause', 'error'].forEach(event => audio.addEventListener(event, finish));
+    });
+  }
+
   async playVariantUnlock() {
     try {
       await this.playSource('audio/variant-unlock.mp3');

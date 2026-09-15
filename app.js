@@ -1,3 +1,4 @@
+import { SECTION_HASHES, parsePracticeRoute, practiceHash, practiceOptions } from './src/services/practice-route.js';
 import { VARIANT_NAMES } from './src/data/fidelat-data.js';
 import { ProgressStore } from './src/core/progress-store.js';
 import { AlphabetExplorerFeature } from './src/features/alphabet-explorer.js';
@@ -9,10 +10,7 @@ import { StorageService } from './src/services/storage-service.js';
 import { THEME_OPTIONS, getThemeFrameVars } from './src/services/theme-service.js';
 
 const LEARNER_LOGIN_ENABLED = false;
-const SECTION_HASHES = Object.freeze({
-  home: 'home', explorer: 'learn', dragdrop: 'test1',
-  challenge: 'test2', additionalLetters: 'more'
-});
+
 
 class FidelatApp {
   constructor(root) {
@@ -67,7 +65,7 @@ class FidelatApp {
       const view = window.location.hash
         ? this.getViewFromHash() || 'home'
         : this.store.getProgress().activeView || 'home';
-      await this.openView(view, { history: 'replace' });
+      await this.openView(view, { history: 'replace', selection: parsePracticeRoute(window.location.hash) });
     }
     this.render();
 
@@ -80,7 +78,7 @@ class FidelatApp {
           : 'Sounds loaded. Log in on this admin page to continue.');
       } else {
         this.setBanner('success', this.store.hasActiveProfile()
-          ? 'Sounds loaded. Continue with the learner menu above.'
+          ? ''
           : '');
       }
     } catch (error) {
@@ -92,22 +90,47 @@ class FidelatApp {
   }
 
   getViewFromHash() {
-    const hash = window.location.hash.slice(1).toLowerCase();
-    return Object.keys(SECTION_HASHES).find((view) => SECTION_HASHES[view] === hash);
+    return parsePracticeRoute(window.location.hash)?.view;
   }
 
   syncSectionUrl(view, mode = 'push') {
-    const hash = `#${SECTION_HASHES[view]}`;
-    if (window.location.hash === hash) return;
+    const hash = practiceHash(view, this.store.getProgress()[view]);
+    let current;
+    try { current = decodeURIComponent(window.location.hash); } catch { current = ''; }
+    if (current === hash) return;
     const url = new URL(window.location.href);
     url.hash = hash;
     window.history[mode === 'replace' ? 'replaceState' : 'pushState'](null, '', url);
   }
 
+  applyPracticeSelection(selection) {
+    if (!selection) return;
+    const { view, part, variantIndex, rowIndex, groupId, tab } = selection;
+    const current = this.store.getProgress()[view];
+    if (view === 'explorer' && part && (current.part !== part || current.variantIndex !== variantIndex
+      || (part === 1 && !Array.isArray(current.reviewSymbols) && this.store.isExplorerPartComplete(variantIndex, 1)))) {
+      this.store.updateExplorer({ part, variantIndex, selectedSymbol: null, lastPlayedSymbol: null,
+        reviewSymbols: part === 1 && this.store.isExplorerPartComplete(variantIndex, 1) ? [] : null });
+    }
+    if (view === 'challenge' && part && (current.part !== part || current.variantIndex !== variantIndex)) {
+      this.store.updateChallenge({ part, variantIndex, targetSymbol: null, currentChoices: [],
+        lastOutcome: null, unlockReadyVariantIndex: null, courseCompleted: false, celebrationText: '' });
+    }
+    if (view === 'dragdrop' && part) {
+      // Opening a daily-practice part starts at its first row, not the saved row.
+      this.dragdrop.startRow(part, rowIndex ?? 0);
+    }
+    if (view === 'additionalLetters' && groupId && (current.groupId !== groupId || current.tab !== tab)) {
+      this.store.updateAdditionalLetters({ tab: 'learn' });
+      this.additionalLetters.selectGroup(groupId);
+      this.additionalLetters.setTab(tab);
+    }
+  }
+
   attachEvents() {
     window.addEventListener('hashchange', () => {
       if (this.route !== 'admin') {
-        this.openView(this.getViewFromHash() || 'home', { history: 'replace' })
+        this.openView(this.getViewFromHash() || 'home', { history: 'replace', selection: parsePracticeRoute(window.location.hash) })
           .catch((error) => this.setBanner('error', error.message));
       }
     });
@@ -237,7 +260,9 @@ class FidelatApp {
 
   updateDocumentTitle() {
     const brand = this.store.getText('menu.brandEyebrow', {}, null) || 'Fidelat House';
-    document.title = `${this.getCurrentViewTitle()} | ${brand}`;
+    const view = this.store.getProgress().activeView;
+    const assignment = this.route === 'admin' ? null : practiceOptions(view).find(option => option.hash === practiceHash(view, this.store.getProgress()[view]));
+    document.title = `${this.getCurrentViewTitle()}${assignment ? ` · ${assignment.label}` : ''} | ${brand}`;
   }
 
   escapeAttribute(value) {
@@ -340,6 +365,9 @@ class FidelatApp {
 
     this.audio.stop();
     this.clearPointerDrag();
+    this.applyPracticeSelection(view === 'dragdrop'
+      ? { view, part: 1, ...options.selection }
+      : options.selection);
     this.store.setActiveView(view);
     if (this.audioReady) this.banner = { tone: 'info', text: '' };
     this.syncSectionUrl(view, options.history);
@@ -915,7 +943,7 @@ class FidelatApp {
             </div>
             ${actionButton}
           </div>` : ''}
-          ${this.renderThemePicker()}
+          <details class="appearance"><summary>Your fav color</summary>${this.renderThemePicker()}</details>
         </div>
       </header>
     `;
@@ -1430,11 +1458,14 @@ class FidelatApp {
   }
 
   render() {
+    const previousView = document.body.dataset.view;
+    const openDetails = new Set([...this.root.querySelectorAll('details[open]')].map(node => node.className));
     const focused = this.root.contains(document.activeElement) ? document.activeElement : null;
     const focusData = focused?.dataset.action ? { ...focused.dataset } : null;
     document.body.dataset.view = this.route === 'admin' ? 'admin' : this.store.getProgress().activeView;
     this.updateDocumentTitle();
     this.applyTheme();
+    if (this.route !== 'admin') this.syncSectionUrl(this.store.getProgress().activeView);
     this.root.innerHTML = `
       <div class='app-frame'>
         <div class='studio-shell'>
@@ -1445,6 +1476,25 @@ class FidelatApp {
       </div>
       ${this.renderAuthModal()}
     `;
+    this.root.querySelectorAll('.workspace-top > div:first-child').forEach(header => {
+      const copy = [...header.querySelectorAll(':scope > p')];
+      if (!copy.length) return;
+      const details = document.createElement('details');
+      details.className = 'practice-instructions';
+      details.innerHTML = '<summary>Instructions</summary>';
+      copy.forEach(node => details.append(node));
+      header.append(details);
+    });
+    this.root.querySelectorAll('.workspace .stat-strip').forEach(stats => {
+      const details = document.createElement('details');
+      details.className = 'practice-progress';
+      details.innerHTML = '<summary>Progress</summary>';
+      stats.before(details);
+      details.append(stats);
+    });
+    if (previousView === document.body.dataset.view) {
+      this.root.querySelectorAll('details').forEach(node => { node.open = openDetails.has(node.className); });
+    }
     if (focusData) {
       const replacement = [...this.root.querySelectorAll('[data-action]')].find((element) =>
         Object.entries(focusData).every(([key, value]) => element.dataset[key] === value));

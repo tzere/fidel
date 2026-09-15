@@ -18,7 +18,7 @@ export class DragDropFeature {
   }
 
   getPartLabel(part) {
-    return part === 2 ? 'Second Set' : 'First Set';
+    return part === 2 ? 'Part 2' : 'Part 1';
   }
 
   isPartComplete(part) {
@@ -79,11 +79,6 @@ export class DragDropFeature {
 
   prepareIfNeeded() {
     const { dragdrop } = this.store.getProgress();
-
-    if (dragdrop.part === 1 && this.isPartComplete(1)) {
-      this.startRow(2, this.getNextIncompleteRow(2, 0) ?? 0);
-      return;
-    }
 
     const row = this.getRows(dragdrop.part)[dragdrop.rowIndex];
     if (!row) {
@@ -164,8 +159,14 @@ export class DragDropFeature {
       celebrationText: ''
     });
 
+    try {
+      await this.audio.playSymbol(symbol);
+    } catch {
+      // A playback failure must not undo a correct answer.
+    }
+
     if (!placedSymbols.every(Boolean)) {
-      return { ok: false, status: 'partial', message: 'Good. Keep placing the rest of the family in order.' };
+      return { ok: false, status: 'partial', message: 'Good. Keep placing the rest of the letters in order.' };
     }
 
     return this.completeRow(placedSymbols);
@@ -173,30 +174,33 @@ export class DragDropFeature {
 
   async completeRow(placedSymbols) {
     const { dragdrop } = this.store.getProgress();
+    await this.audio.waitForCurrentAudio?.();
+    if (this.store.getProgress().dragdrop !== dragdrop) return { ok: false, status: 'cancelled', message: '' };
     const currentRow = this.getCurrentRow();
     const familyLabel = currentRow[0] || 'this';
 
     this.store.markDragDropRowComplete(dragdrop.part, dragdrop.rowIndex);
     this.audio.playSuccessTone();
 
-    const nextRowIndex = this.getNextIncompleteRow(dragdrop.part, dragdrop.rowIndex + 1);
+    const nextRowIndex = this.getNextIncompleteRow(dragdrop.part, dragdrop.rowIndex + 1)
+      ?? this.getNextIncompleteRow(dragdrop.part, 0);
     if (nextRowIndex !== null) {
       const nextRow = this.getRows(dragdrop.part)[nextRowIndex];
       this.startRow(dragdrop.part, nextRowIndex);
       this.store.updateDragDrop({
         lastOutcome: 'correct',
-        celebrationText: `Wonderful! You completed the ${familyLabel} family. Next, arrange the ${nextRow[0]} family.`
+        celebrationText: `Wonderful! You completed the ${familyLabel} row. Next, arrange the ${nextRow[0]} row.`
       });
       return {
         ok: true,
         status: 'row-complete',
-        message: `Wonderful! You completed the ${familyLabel} family. Next, arrange the ${nextRow[0]} family.`
+        message: `Wonderful! You completed the ${familyLabel} row. Next, arrange the ${nextRow[0]} row.`
       };
     }
 
     const completionText = dragdrop.part === 1
-      ? 'Excellent work. You completed the first set. The second set is ready next.'
-      : 'Excellent work. You completed the second set. The whole drag-and-drop journey is complete.';
+      ? 'Excellent work. You completed Part 1. Part 2 is ready next.'
+      : 'Excellent work. You completed Part 2. The whole drag-and-drop journey is complete.';
 
     await this.audio.playVariantUnlock();
 
@@ -229,14 +233,14 @@ export class DragDropFeature {
     const celebrationMarkup = showCelebration
       ? `
         <div class='celebration-card challenge-celebration dragdrop-celebration ${dragdrop.completedSet ? 'is-final' : ''}'>
-          <div class='activity-badge'>${dragdrop.completedSet ? 'Set Complete' : 'Family Complete'}</div>
-          <h3 class='activity-title'>${dragdrop.completedSet ? `${partLabel} complete.` : `${rowLabel} family complete.`}</h3>
+          <div class='activity-badge'>${dragdrop.completedSet ? 'Part Complete' : 'Row Complete'}</div>
+          <h3 class='activity-title'>${dragdrop.completedSet ? `${partLabel} complete.` : `${rowLabel} row complete.`}</h3>
           <p class='activity-copy'>${dragdrop.celebrationText}</p>
           <div class='activity-actions'>
             ${dragdrop.completedSet
-              ? `${dragdrop.part === 1 ? `<button class='primary-btn' type='button' data-action='dragdrop-next-set'>Continue To Second Set</button>` : ''}
+              ? `${dragdrop.part === 1 ? `<button class='primary-btn' type='button' data-action='dragdrop-next-set'>Continue To Part 2</button>` : ''}
                  <button class='ghost-btn' type='button' data-action='dragdrop-restart-journey'>Practice The Whole Journey Again</button>`
-              : `<button class='primary-btn' type='button' data-action='dragdrop-continue'>Continue With Next Family</button>`}
+              : `<button class='primary-btn' type='button' data-action='dragdrop-continue'>Continue With Next Row</button>`}
           </div>
         </div>
       `
@@ -260,10 +264,10 @@ export class DragDropFeature {
 
         <section class='panel-card card'>
           <div class='stat-strip'>
-            <div class='stat-pill'><strong>${partLabel}</strong>Current Set</div>
-            <div class='stat-pill'><strong>${completedCount}</strong>Families Solved</div>
-            <div class='stat-pill'><strong>${totalRows}</strong>Families In Set</div>
-            <div class='stat-pill'><strong>${rowLabel}</strong>Current Family</div>
+            <div class='stat-pill'><strong>${partLabel}</strong>Current Part</div>
+            <div class='stat-pill'><strong>${completedCount}</strong>Rows Solved</div>
+            <div class='stat-pill'><strong>${totalRows}</strong>Rows In Part</div>
+            <div class='stat-pill'><strong>${rowLabel}</strong>Current Row</div>
           </div>
 
           <div class='message-box ${dragdrop.lastOutcome === 'correct' ? 'is-success' : dragdrop.lastOutcome === 'wrong' ? 'is-error' : ''}'>
@@ -271,7 +275,7 @@ export class DragDropFeature {
               ${dragdrop.celebrationText || this.store.getText('dragdrop.instructions', {
                 rowLabel,
                 partLabel
-              }, activeProfile)}
+              }, activeProfile).replace(/family/g, 'row')}
             </div>
           </div>
 

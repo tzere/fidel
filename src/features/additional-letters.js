@@ -347,7 +347,7 @@ export class AdditionalLettersFeature {
           </div>
         </div>
 
-        ${this.renderSetButtons()}
+        <details class="set-directory"><summary>Browse letter sets</summary>${this.renderSetButtons()}</details>
 
         <div class='admin-tabs additional-tabs'>
           <button class='chip-btn ${tab === 'learn' ? 'is-active' : ''}' type='button' data-action='additional-tab' data-tab='learn'>${learnTabLabel}</button>
