@@ -774,12 +774,18 @@ class FidelatApp {
         return;
       }
 
-      if (action === 'challenge-reset') {
-        const activeProfile = this.store.getActiveProfile();
-        const shouldReset = window.confirm(`Reset all saved progress for ${activeProfile?.name || 'this learner'} on this device?`);
+      if (action === 'reset-progress') {
+        const shouldReset = window.confirm('Reset all learning progress in Learn, Test 1, Test 2, and More for this learner on this device? This gives the next learner a fresh start and cannot be undone.');
         if (!shouldReset) return;
+        const view = this.store.getProgress().activeView;
+        this.audio.stop();
+        window.speechSynthesis?.cancel();
+        this.clearPointerDrag();
         this.store.resetCurrentProfile();
-        this.setBanner('info', 'This learner now has a fresh start.');
+        this.store.setActiveView(view);
+        this.syncSectionUrl(view, 'replace');
+        this.setBanner('success', 'All learning progress has been reset. Ready for a new learner.');
+        return;
       }
     } catch (error) {
       this.setBanner('error', error.message || 'Something went wrong.');
@@ -943,7 +949,10 @@ class FidelatApp {
             </div>
             ${actionButton}
           </div>` : ''}
-          <details class="appearance"><summary>Your fav color</summary>${this.renderThemePicker()}</details>
+          <div class="learner-tools">
+            <details class="appearance"><summary>Your fav color</summary>${this.renderThemePicker()}</details>
+            ${!adminRoute && activeProfile ? `<button class="ghost-btn reset-progress-btn" type="button" data-action="reset-progress" title="Reset learning progress in all sections">Reset Progress</button>` : ''}
+          </div>
         </div>
       </header>
     `;

@@ -52,3 +52,7 @@ Validation for this update: all 81 offered assignments were opened in Chromium; 
 Test 1 now shares only two part URLs. Its address stays unchanged while progressing through rows within a part, and opening or reloading a Test 1 part starts at its first row while keeping recorded mastery. Old set/family URLs remain accepted for compatibility, then become the simpler part URL. Every correct placement plays the corresponding letter recording; incorrect placements do not. Completion feedback waits for the final recording to finish. Twelve automated tests cover routing, review and row progression, and correct-answer audio.
 
 Test 1 entry now starts Part 1 at ሀ. Explicit Part 2 links start at ሠ. Previously recorded completion is retained; saved row position no longer skips the first row when opening a part.
+
+## Reset for a new learner
+
+A shared **Reset Progress** button is visible on Home, Learn, Test 1, Test 2, and More. Confirmation explicitly says that all four activities are reset for the active learner. Cancelling leaves progress unchanged. Confirming stops playback, clears progress, scores, completion, and review state across all activities, and leaves the user in the current section at its beginning. The address changes to that starting assignment so a refresh cannot reopen the previous advanced assignment. Theme and profile details are retained. Saved progress remains cleared after reload.

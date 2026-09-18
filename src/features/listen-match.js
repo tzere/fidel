@@ -256,7 +256,6 @@ export class ListenMatchFeature {
           </div>
           <div class='mode-nav'>
             <button class='secondary-btn' type='button' data-action='challenge-play'>Play Prompt</button>
-            <button class='ghost-btn' type='button' data-action='challenge-reset'>Reset Progress</button>
           </div>
         </div>
 
