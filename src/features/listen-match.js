@@ -41,10 +41,10 @@ export class ListenMatchFeature {
     await this.startRound(true);
   }
 
-  async unlockNextVariant() {
+  async openNextVariant() {
     const { unlockReadyVariantIndex } = this.store.getProgress().challenge;
     if (typeof unlockReadyVariantIndex !== 'number') {
-      throw new Error('There is no new variant ready to unlock yet.');
+      throw new Error('Choose a variant from the dropdown to continue.');
     }
 
     await this.openVariant(unlockReadyVariantIndex);
@@ -84,7 +84,7 @@ export class ListenMatchFeature {
   async replayPrompt() {
     const { targetSymbol, unlockReadyVariantIndex, courseCompleted, celebrationText } = this.store.getProgress().challenge;
     if (typeof unlockReadyVariantIndex === 'number' || courseCompleted) {
-      throw new Error(celebrationText || 'Use the unlock action or choose a variant tab to continue.');
+      throw new Error(celebrationText || 'Choose a variant from the dropdown to continue.');
     }
 
     if (!targetSymbol) {
@@ -102,7 +102,7 @@ export class ListenMatchFeature {
         return {
           ok: false,
           status: 'blocked',
-          message: challenge.celebrationText || 'Use the unlock action or choose a variant tab to continue.'
+          message: challenge.celebrationText || 'Choose a variant from the dropdown to continue.'
         };
       }
 
@@ -143,11 +143,13 @@ export class ListenMatchFeature {
       patch.targetSymbol = null;
       patch.currentChoices = [];
 
-      if (challenge.variantIndex < VARIANT_NAMES.length - 1) {
-        const nextVariantIndex = challenge.variantIndex + 1;
+      const nextVariantIndex = Array.from({ length: VARIANT_NAMES.length }, (_, offset) =>
+        (challenge.variantIndex + offset + 1) % VARIANT_NAMES.length
+      ).find(index => !this.store.isVariantCompleteByIndex(index));
+      if (nextVariantIndex !== undefined) {
         patch.unlockReadyVariantIndex = nextVariantIndex;
         patch.courseCompleted = false;
-        patch.celebrationText = `${VARIANT_NAMES[challenge.variantIndex]} is complete. Unlock ${VARIANT_NAMES[nextVariantIndex]} to continue.`;
+        patch.celebrationText = `${VARIANT_NAMES[challenge.variantIndex]} is complete. Choose any variant, or continue with ${VARIANT_NAMES[nextVariantIndex]}.`;
         this.store.updateChallenge(patch);
         return {
           ok: true,
@@ -179,18 +181,9 @@ export class ListenMatchFeature {
     const { challenge } = this.store.getProgress();
     const targetPrepared = Boolean(challenge.targetSymbol);
     const celebrationActive = typeof challenge.unlockReadyVariantIndex === 'number' || challenge.courseCompleted;
-    const variantButtons = VARIANT_NAMES.map((name, index) => {
-      const summary = this.store.getVariantSummary(index, this.audio.audioMap);
-      return `
-        <button
-          class='variant-btn ${index === challenge.variantIndex ? 'is-active' : ''} ${summary.unlocked ? '' : 'is-locked'}'
-          type='button'
-          data-action='challenge-variant'
-          data-variant='${index}'
-          ${summary.unlocked ? '' : 'disabled'}
-        >${name}</button>
-      `;
-    }).join('');
+    const variantOptions = VARIANT_NAMES.map((name, index) =>
+      `<option value='${index}' ${index === challenge.variantIndex ? 'selected' : ''}>${name}</option>`
+    ).join('');
 
     const titleText = this.store.getText('challenge.title', {}, activeProfile);
     const titleEnglish = this.store.getEnglishSupportText('challenge.title', {}, activeProfile);
@@ -230,7 +223,7 @@ export class ListenMatchFeature {
           }, activeProfile)}</p>
           ${unlockEnglish ? `<p class='english-copy'>${unlockEnglish}</p>` : ''}
           <div class='activity-actions'>
-            <button class='primary-btn' type='button' data-action='challenge-unlock'>Unlock ${VARIANT_NAMES[challenge.unlockReadyVariantIndex]}</button>
+            <button class='primary-btn' type='button' data-action='challenge-next'>Continue with ${VARIANT_NAMES[challenge.unlockReadyVariantIndex]}</button>
           </div>
         </div>
       `
@@ -238,7 +231,7 @@ export class ListenMatchFeature {
         ? `
           <div class='celebration-card challenge-celebration is-final'>
             <div class='activity-badge'>All Variants Complete</div>
-            <h3 class='activity-title'>Final celebration unlocked.</h3>
+            <h3 class='activity-title'>Wonderful work!</h3>
             <p class='activity-copy'>${this.store.getText('challenge.finalBody', {}, activeProfile)}</p>
             ${finalEnglish ? `<p class='english-copy'>${finalEnglish}</p>` : ''}
           </div>
@@ -276,7 +269,14 @@ export class ListenMatchFeature {
             </div>
           </div>
 
-          <details class='variant-directory'><summary>Variant progress</summary><div class='variant-grid'>${variantButtons}</div></details>
+          <div class='selector-row'>
+            <label>
+              <span class='field-label'>Variant</span>
+              <select class='selector' data-action='challenge-variant-select' ${audioReady ? '' : 'disabled'}>
+                ${variantOptions}
+              </select>
+            </label>
+          </div>
 
           <div class='message-box ${challenge.lastOutcome === 'correct' ? 'is-success' : challenge.lastOutcome === 'wrong' ? 'is-error' : ''}'>
             <div class='message'>

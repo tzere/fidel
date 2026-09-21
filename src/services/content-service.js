@@ -342,7 +342,7 @@ export const COPY_SECTIONS = [
         key: 'challenge.intro',
         label: 'Challenge introduction',
         help: 'You can use {name} and {learnerType} if needed.',
-        defaultText: 'Open a variant tab and the first listening challenge begins right away. Completed variants unlock the next one with a celebration moment.',
+        defaultText: 'Choose any variant from the dropdown to begin a listening challenge. All seven variants are available from the start.',
         femaleText: '',
         maleText: ''
       }),
@@ -362,7 +362,7 @@ export const COPY_SECTIONS = [
         key: 'challenge.waitingMessage',
         label: 'Challenge waiting instruction',
         help: 'Shown when no prompt is currently active.',
-        defaultText: 'Choose a variant tab or press Play Prompt to hear the next sound.'
+        defaultText: 'Choose a variant from the dropdown or press Play Prompt to hear the next sound.'
       }),
       learnerField({
         key: 'challenge.promptReady',
@@ -372,15 +372,15 @@ export const COPY_SECTIONS = [
       }),
       learnerField({
         key: 'challenge.unlockBody',
-        label: 'Challenge unlock panel',
-        help: 'Shown when a new variant is ready to unlock. You can use {nextVariantName}.',
-        defaultText: 'The next stage is ready. Press the button below to unlock it and start the first challenge immediately.'
+        label: 'Challenge completion panel',
+        help: 'Shown when a variant is complete. You can use {nextVariantName}.',
+        defaultText: 'Well done! Choose any variant from the dropdown, or continue with {nextVariantName} below.'
       }),
       learnerField({
         key: 'challenge.finalBody',
         label: 'Challenge final panel',
         help: 'Shown when all variants are complete.',
-        defaultText: 'The learner finished every variant. You can review any stage from the tabs, or reset progress for a fresh start.'
+        defaultText: 'The learner finished every variant. You can review any variant from the dropdown, or reset progress for a fresh start.'
       })
     ]
   },

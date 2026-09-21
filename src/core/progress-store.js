@@ -2,7 +2,6 @@ import {
   ADDITIONAL_LETTER_GROUPS,
   countPlayableSymbols,
   createEmptyMastery,
-  getHighestUnlockedVariant,
   getSymbolsForVariant,
   isVariantComplete,
   VARIANT_NAMES
@@ -233,11 +232,11 @@ export class ProgressStore {
   }
 
   getUnlockedCount() {
-    return getHighestUnlockedVariant(this.state.progress.challenge.mastery) + 1;
+    return VARIANT_NAMES.length;
   }
 
   isVariantUnlocked(variantIndex) {
-    return variantIndex <= getHighestUnlockedVariant(this.state.progress.challenge.mastery);
+    return Number.isInteger(variantIndex) && variantIndex >= 0 && variantIndex < VARIANT_NAMES.length;
   }
 
   isVariantCompleteByIndex(variantIndex) {

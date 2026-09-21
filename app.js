@@ -317,7 +317,7 @@ class FidelatApp {
 
     if (redirectView === 'challenge') {
       const { challenge } = this.store.getProgress();
-      if (!challenge.targetSymbol && !challenge.unlockReadyVariantIndex && !challenge.courseCompleted) {
+      if (!challenge.targetSymbol && typeof challenge.unlockReadyVariantIndex !== 'number' && !challenge.courseCompleted) {
         await this.requireAudio(() => this.challenge.startRound(true));
       }
     }
@@ -374,7 +374,7 @@ class FidelatApp {
 
     if (view === 'challenge' && options.autoStart) {
       const { challenge } = this.store.getProgress();
-      if (!challenge.targetSymbol && !challenge.unlockReadyVariantIndex && !challenge.courseCompleted) {
+      if (!challenge.targetSymbol && typeof challenge.unlockReadyVariantIndex !== 'number' && !challenge.courseCompleted) {
         await this.requireAudio(() => this.challenge.startRound(true));
         this.setBanner('info', 'The first challenge started. Listen and choose the matching symbol.');
         return;
@@ -384,11 +384,21 @@ class FidelatApp {
     this.render();
   }
 
-  handleChange(event) {
+  async handleChange(event) {
     const action = event.target.dataset.action;
     if (action === 'theme-select') {
       this.store.setTheme(event.target.value);
       this.render();
+      return;
+    }
+
+    if (action === 'challenge-variant-select') {
+      try {
+        await this.requireAudio(() => this.challenge.openVariant(Number(event.target.value)));
+        this.setBanner('info', 'Listen to the sound, then choose the matching symbol.');
+      } catch (error) {
+        this.setBanner('error', error.message);
+      }
       return;
     }
 
@@ -750,20 +760,14 @@ class FidelatApp {
         return;
       }
 
-      if (action === 'challenge-variant') {
-        await this.requireAudio(() => this.challenge.openVariant(Number(button.dataset.variant)));
-        this.setBanner('info', 'The selected variant opened and the next challenge was prepared.');
-        return;
-      }
-
       if (action === 'challenge-play') {
         await this.requireAudio(() => this.challenge.replayPrompt());
         this.setBanner('info', 'Prompt played. Choose the matching symbol.');
         return;
       }
 
-      if (action === 'challenge-unlock') {
-        await this.requireAudio(() => this.challenge.unlockNextVariant());
+      if (action === 'challenge-next') {
+        await this.requireAudio(() => this.challenge.openNextVariant());
         this.setBanner('success', 'The next variant is now open and the first challenge has started.');
         return;
       }
