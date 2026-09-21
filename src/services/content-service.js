@@ -14,7 +14,7 @@ function sharedField(config) {
   };
 }
 
-export const COPY_SECTIONS = [
+const COPY_CATALOG = [
   {
     id: 'labels',
     title: 'Reusable Labels',
@@ -63,8 +63,8 @@ export const COPY_SECTIONS = [
   },
   {
     id: 'auth',
-    title: 'Entry Pages',
-    description: 'Titles and guidance shown before a learner or admin has signed in on this device.',
+    title: 'Optional Account Pages',
+    description: 'Saved wording for optional learner sign-in screens and administrator sign-in. Learners currently start without signing in.',
     fields: [
       learnerField({
         key: 'auth.registerTitle',
@@ -151,7 +151,7 @@ export const COPY_SECTIONS = [
         key: 'home.welcomeBody',
         label: 'Welcome description',
         help: 'A longer explanation on the learner home page. You can use {name} and {learnerType}.',
-        defaultText: 'A typical learner can stay on one page for a while: begin in Explorer, move to Drag & Drop to consolidate family order, then continue to Challenge.',
+        defaultText: 'Begin with Learn, practice letter order in Test 1, then listen and match in Test 2. Explore additional letters in More.',
         femaleText: '',
         maleText: ''
       }),
@@ -177,7 +177,7 @@ export const COPY_SECTIONS = [
         key: 'home.dragdropCopy',
         label: 'Drag and drop activity card',
         help: 'Text shown under the Drag and Drop card on the home page.',
-        defaultText: 'Arrange each family from the first variant to the seventh variant using drag-and-drop or tap-to-place, beginning with the first set and then continuing to the second set.'
+        defaultText: 'Arrange each family from the first variant to the seventh variant using drag-and-drop or tap-to-place, choosing Part 1 or Part 2 for daily practice.'
       }),
       learnerField({
         key: 'home.challengeTitle',
@@ -189,7 +189,7 @@ export const COPY_SECTIONS = [
         key: 'home.challengeCopy',
         label: 'Challenge activity card',
         help: 'Text shown under the Challenge card on the home page.',
-        defaultText: 'Open variant tabs and start listening practice immediately.'
+        defaultText: 'Choose any of the seven variants from the dropdown and match each sound to its letter.'
       }),
       learnerField({
         key: 'home.additionalTitle',
@@ -232,9 +232,9 @@ export const COPY_SECTIONS = [
     ]
   },
   {
-    id: 'activities',
-    title: 'Activity Pages',
-    description: 'The main page titles, introductions, and instructions shown inside each learner activity.',
+    id: 'learn',
+    title: 'Learn',
+    description: 'Choose a variant, hear letters in Parts 1 and 2, and review completed practice.',
     fields: [
       learnerField({
         key: 'explorer.title',
@@ -249,6 +249,12 @@ export const COPY_SECTIONS = [
         defaultText: 'A gentle practice page for recognizing and hearing each letter before moving to drag-and-drop or challenge work.',
         femaleText: '',
         maleText: ''
+      }),
+      learnerField({
+        key: 'explorer.instructions',
+        label: 'Learn instructions',
+        help: 'Shown inside Instructions on Learn. Enter your own guidance here; line breaks are preserved. You can use {name}.',
+        defaultText: 'Choose a variant from the dropdown, then tap each letter to hear its sound. Replay letters as often as you like.\nAfter you hear every letter in Part 1, Part 2 opens. Use Review Part 1 to practice again, or Open Part 2 to return to it.\nUse Reset Progress when a new learner uses this browser. This clears progress in all sections.'
       }),
       learnerField({
         key: 'explorer.helperIdle',
@@ -268,6 +274,13 @@ export const COPY_SECTIONS = [
         help: 'Shown when the learner finishes the first explorer part for a variant. You can use {variantName}.',
         defaultText: 'The first part is complete. The second part is now open for {variantName}.'
       }),
+    ]
+  },
+  {
+    id: 'test1',
+    title: 'Test 1',
+    description: 'Two daily practice parts, beginning with ሀ. Arrange the seven variants; correct placements play their sounds.',
+    fields: [
       learnerField({
         key: 'dragdrop.title',
         label: 'Drag and drop title',
@@ -278,7 +291,7 @@ export const COPY_SECTIONS = [
         key: 'dragdrop.intro',
         label: 'Drag and drop introduction',
         help: 'You can use {name} and {learnerType} if needed.',
-        defaultText: 'Arrange each shuffled family from the first variant to the seventh variant. Start with the first set, finish it, then continue naturally to the second set.',
+        defaultText: 'Arrange each shuffled family from the first variant to the seventh variant. Choose Part 1 or Part 2 for daily practice. Each correct placement plays the letter sound.',
         femaleText: '',
         maleText: ''
       }),
@@ -288,6 +301,13 @@ export const COPY_SECTIONS = [
         help: 'Shown above the slots while a row is active. You can use {rowLabel} and {partLabel}.',
         defaultText: 'Drag each letter of the {rowLabel} family into the correct variant position.'
       }),
+    ]
+  },
+  {
+    id: 'more',
+    title: 'More',
+    description: 'Additional letter sets, with Learn and Drag & Drop practice.',
+    fields: [
       learnerField({
         key: 'additional.title',
         label: 'More letters title',
@@ -332,6 +352,13 @@ export const COPY_SECTIONS = [
         help: 'Label shown on the shuffle button in the Drag & Drop tab.',
         defaultText: 'Shuffle Again'
       }),
+    ]
+  },
+  {
+    id: 'test2',
+    title: 'Test 2',
+    description: 'Listen and match. All seven variants are available from the dropdown, with two parts per variant.',
+    fields: [
       learnerField({
         key: 'challenge.title',
         label: 'Challenge title',
@@ -447,6 +474,24 @@ export const COPY_SECTIONS = [
     ]
   }
 ];
+
+// Keep field keys stable so reorganizing the editor preserves saved manual wording.
+const SECTION_ORDER = ['home', 'learn', 'test1', 'test2', 'more', 'navigation', 'labels', 'admin', 'auth', 'system'];
+function currentActivityNames(text) {
+  return text.replace(/Explorer|explorer/g, 'Learn')
+    .replace(/Drag and drop|drag and drop/g, 'Test 1')
+    .replace(/Challenge|challenge/g, 'Test 2');
+}
+export const COPY_SECTIONS = SECTION_ORDER.map(id => {
+  const section = COPY_CATALOG.find(section => section.id === id);
+  return {
+    ...section,
+    fields: section.fields.map(field => ({ ...field,
+      label: currentActivityNames(field.label),
+      help: currentActivityNames(field.help)
+    }))
+  };
+});
 
 function createCopyEntry(field) {
   return {

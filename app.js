@@ -413,9 +413,9 @@ class FidelatApp {
     this.store.getCopySections().forEach((section) => {
       section.fields.forEach((field) => {
         patch[field.key] = {
-          default: String(formData.get(`${field.key}:default`) ?? '').trim(),
-          female: field.gendered ? String(formData.get(`${field.key}:female`) ?? '').trim() : '',
-          male: field.gendered ? String(formData.get(`${field.key}:male`) ?? '').trim() : ''
+          default: String(formData.get(`${field.key}:default`) ?? ''),
+          female: field.gendered ? String(formData.get(`${field.key}:female`) ?? '') : '',
+          male: field.gendered ? String(formData.get(`${field.key}:male`) ?? '') : ''
         };
       });
     });
@@ -1318,17 +1318,26 @@ class FidelatApp {
     return `
       <article class='card panel-card admin-panel'>
         <div class='hint-box'>${this.store.getText('admin.copyHint', {}, null)}</div>
+        <p class='panel-copy'>Edit the sections below in the same order as the learner menu. Saving preserves the wording in every section, including optional female and male versions. Changes are saved in this browser; they are not published to other devices by a GitHub push.</p>
+        <details class='admin-site-guide'>
+          <summary>Current site features and sharing</summary>
+          <p class='panel-copy'>Learn has seven variants and two parts. Test 1 has two daily practice parts and plays each correctly placed letter. Test 2 lets learners choose any variant. More offers extra letter sets.</p>
+          <p class='panel-copy'>To share practice, open the learner section, choose the part, variant, or set, then copy the address bar. Reset Progress is available in every learner section and clears all learning progress for the current profile, while keeping admin text and the selected color.</p>
+        </details>
         <form class='auth-form' data-action='admin-copy-form'>
+          <div class='activity-actions admin-save-bar'>
+            <button class='primary-btn' type='submit'>Save Text Changes</button>
+          </div>
           ${this.store.getCopySections().map((section) => `
-            <section class='workspace'>
+            <details class='admin-copy-section' id='copy-${section.id}'>
+              <summary>${section.title}</summary>
               <div>
-                <div class='activity-badge'>${section.title}</div>
                 <p class='panel-copy'>${section.description}</p>
               </div>
               <div class='admin-user-list'>
                 ${section.fields.map((field) => this.renderAdminCopyField(field, copy)).join('')}
               </div>
-            </section>
+            </details>
           `).join('')}
           <div class='activity-actions'>
             <button class='primary-btn' type='submit'>Save Text Changes</button>
@@ -1346,6 +1355,7 @@ class FidelatApp {
 
     return `
       <article class='card panel-card admin-panel'>
+        <p class='panel-copy'>Learners currently practice without signing in. These controls manage previously registered accounts on this browser. Use Reset Progress on a learner page to clear the current local learner’s practice.</p>
         <div class='stat-strip'>
           <div class='stat-pill'><strong>${profiles.length}</strong>Learners</div>
           <div class='stat-pill'><strong>${femaleCount}</strong>Female profiles</div>
@@ -1472,7 +1482,7 @@ class FidelatApp {
 
   render() {
     const previousView = document.body.dataset.view;
-    const openDetails = new Set([...this.root.querySelectorAll('details[open]')].map(node => node.className));
+    const openDetails = new Set([...this.root.querySelectorAll('details[open]')].map(node => node.id || node.className));
     const focused = this.root.contains(document.activeElement) ? document.activeElement : null;
     const focusData = focused?.dataset.action ? { ...focused.dataset } : null;
     document.body.dataset.view = this.route === 'admin' ? 'admin' : this.store.getProgress().activeView;
@@ -1506,7 +1516,7 @@ class FidelatApp {
       details.append(stats);
     });
     if (previousView === document.body.dataset.view) {
-      this.root.querySelectorAll('details').forEach(node => { node.open = openDetails.has(node.className); });
+      this.root.querySelectorAll('details').forEach(node => { node.open = openDetails.has(node.id || node.className); });
     }
     if (focusData) {
       const replacement = [...this.root.querySelectorAll('[data-action]')].find((element) =>

@@ -1325,3 +1325,10 @@ summary:focus-visible { outline: 3px solid #2156a0; outline-offset: 2px; }
 .learner-tools { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .learner-tools .appearance { flex: 1 1 140px; min-width: 0; }
 .reset-progress-btn { min-height: 44px; padding: 0 10px; font-size: .82rem; white-space: nowrap; }
+
+/* Admin sections follow the learner menu; instructions retain authored line breaks. */
+.learner-instructions { white-space: pre-wrap; overflow-wrap: anywhere; }
+.admin-copy-section { border: 1px solid var(--line); border-radius: 14px; padding: 12px; min-width: 0; }
+.admin-copy-section > summary { font-size: 1.1rem; }
+.admin-copy-section .admin-user-list { margin-top: 12px; }
+.admin-save-bar { position: sticky; top: 8px; z-index: 5; padding: 8px; background: var(--surface, #fff); border-radius: 12px; }

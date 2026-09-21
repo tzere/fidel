@@ -81,6 +81,8 @@ export class AlphabetExplorerFeature {
     const titleEnglish = this.store.getEnglishSupportText('explorer.title', {}, activeProfile);
     const introText = this.store.getText('explorer.intro', {}, activeProfile);
     const introEnglish = this.store.getEnglishSupportText('explorer.intro', {}, activeProfile);
+    const instructions = this.store.getText('explorer.instructions', {}, activeProfile);
+    const instructionsText = instructions.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const firstPartComplete = this.store.isExplorerPartComplete(variantIndex, 1);
     const reviewing = part === 1 && Array.isArray(explorer.reviewSymbols);
     const partProgress = reviewing
@@ -96,6 +98,7 @@ export class AlphabetExplorerFeature {
             <h2 class='view-title'>${titleText}</h2>
             ${titleEnglish ? `<p class='english-copy'>${titleEnglish}</p>` : ''}
             <p class='panel-copy'>${introText}</p>
+            <p class='panel-copy learner-instructions'>${instructionsText}</p>
             ${introEnglish ? `<p class='english-copy'>${introEnglish}</p>` : ''}
           </div>
           <div class='mode-nav'>
