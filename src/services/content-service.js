@@ -130,9 +130,27 @@ const COPY_CATALOG = [
   },
   {
     id: 'home',
-    title: 'Home Page',
-    description: 'The learner dashboard can greet each learner with different female and male wording.',
+    title: 'Help',
+    description: 'Getting started, guidance for adults, activity cards, and progress summaries. Existing dashboard wording is preserved.',
     fields: [
+      learnerField({
+        key: 'help.title',
+        label: 'Help page title',
+        help: 'Main heading on the Help page at the end of the menu.',
+        defaultText: 'Help: how to practice'
+      }),
+      learnerField({
+        key: 'help.gettingStarted',
+        label: 'Getting started',
+        help: 'Simple guidance at the top of Help. Line breaks are preserved.',
+        defaultText: 'Start in Learn: choose a variant and tap a letter to hear it. Listen and repeat as often as you like.\nTry Test 1: choose Part 1 or Part 2 and put each letter in its place. Tap a letter and then a spot, or drag it. A correct answer plays the sound.\nTry Test 2: choose any variant, listen, and tap the matching letter. Use Play Prompt to hear it again.\nOpen More to practice extra letters. You can return to Learn at any time.'
+      }),
+      learnerField({
+        key: 'help.adults',
+        label: 'Guidance for parents and teachers',
+        help: 'Expandable guidance on Help, including bookmarks, sound, and shared devices.',
+        defaultText: 'Keep practice short and let the learner repeat familiar letters. In Learn, Part 2 opens after every letter in Part 1 has been heard. Review Part 1 starts another practice pass.\nTo share daily practice, select a part, variant, or set and copy the address from your browser. The link opens that practice directly.\nProgress is saved in this browser. Before another learner starts on the same device, use Reset Progress; it clears progress in all sections.\nIf you cannot hear a sound, check the device volume and tap a letter or Play Prompt. Use Your fav color to choose a comfortable page color.'
+      }),
       learnerField({
         key: 'home.pageBadge',
         label: 'Home badge',
@@ -150,7 +168,7 @@ const COPY_CATALOG = [
       learnerField({
         key: 'home.welcomeBody',
         label: 'Welcome description',
-        help: 'A longer explanation on the learner home page. You can use {name} and {learnerType}.',
+        help: 'A longer explanation on the learner Help page. You can use {name} and {learnerType}.',
         defaultText: 'Begin with Learn, practice letter order in Test 1, then listen and match in Test 2. Explore additional letters in More.',
         femaleText: '',
         maleText: ''
@@ -158,55 +176,55 @@ const COPY_CATALOG = [
       learnerField({
         key: 'home.explorerTitle',
         label: 'Explorer card title',
-        help: 'Title shown above the Explorer activity card on the home page.',
-        defaultText: '1. Explorer'
+        help: 'Title shown above the Explorer activity card on the Help page.',
+        defaultText: 'Learn'
       }),
       learnerField({
         key: 'home.explorerCopy',
         label: 'Explorer activity card',
-        help: 'Text shown under the Explorer card on the home page.',
+        help: 'Text shown under the Explorer card on the Help page.',
         defaultText: 'Press letters and hear them as often as needed.'
       }),
       learnerField({
         key: 'home.dragdropTitle',
         label: 'Drag and drop card title',
-        help: 'Title shown above the Drag and Drop activity card on the home page.',
-        defaultText: '2. Drag & Drop'
+        help: 'Title shown above the Drag and Drop activity card on the Help page.',
+        defaultText: 'Test 1'
       }),
       learnerField({
         key: 'home.dragdropCopy',
         label: 'Drag and drop activity card',
-        help: 'Text shown under the Drag and Drop card on the home page.',
+        help: 'Text shown under the Drag and Drop card on the Help page.',
         defaultText: 'Arrange each family from the first variant to the seventh variant using drag-and-drop or tap-to-place, choosing Part 1 or Part 2 for daily practice.'
       }),
       learnerField({
         key: 'home.challengeTitle',
         label: 'Challenge card title',
-        help: 'Title shown above the Challenge activity card on the home page.',
-        defaultText: '3. Challenge'
+        help: 'Title shown above the Challenge activity card on the Help page.',
+        defaultText: 'Test 2'
       }),
       learnerField({
         key: 'home.challengeCopy',
         label: 'Challenge activity card',
-        help: 'Text shown under the Challenge card on the home page.',
+        help: 'Text shown under the Challenge card on the Help page.',
         defaultText: 'Choose any of the seven variants from the dropdown and match each sound to its letter.'
       }),
       learnerField({
         key: 'home.additionalTitle',
         label: 'More letters card title',
-        help: 'Title shown above the More Letters activity card on the home page.',
+        help: 'Title shown above the More Letters activity card on the Help page.',
         defaultText: 'Learn Additional Tigrinya Letters'
       }),
       learnerField({
         key: 'home.additionalCopy',
         label: 'More letters activity card',
-        help: 'Text shown under the More Letters card on the home page.',
+        help: 'Text shown under the More Letters card on the Help page.',
         defaultText: 'Practice the extra Tigrinya letter sets one family at a time with Learn and Drag & Drop.'
       }),
       sharedField({
         key: 'home.additionalButtonLabel',
         label: 'More letters button label',
-        help: 'Label shown on the home-page button that opens the More Letters page.',
+        help: 'Label shown on the Help-page button that opens the More Letters page.',
         defaultText: 'Open More Letters'
       }),
       learnerField({
@@ -476,7 +494,7 @@ const COPY_CATALOG = [
 ];
 
 // Keep field keys stable so reorganizing the editor preserves saved manual wording.
-const SECTION_ORDER = ['home', 'learn', 'test1', 'test2', 'more', 'navigation', 'labels', 'admin', 'auth', 'system'];
+const SECTION_ORDER = ['learn', 'test1', 'test2', 'more', 'home', 'navigation', 'labels', 'admin', 'auth', 'system'];
 function currentActivityNames(text) {
   return text.replace(/Explorer|explorer/g, 'Learn')
     .replace(/Drag and drop|drag and drop/g, 'Test 1')

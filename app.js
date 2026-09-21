@@ -63,8 +63,8 @@ class FidelatApp {
     this.attachEvents();
     if (this.route !== 'admin') {
       const view = window.location.hash
-        ? this.getViewFromHash() || 'home'
-        : this.store.getProgress().activeView || 'home';
+        ? this.getViewFromHash() || 'explorer'
+        : 'explorer';
       await this.openView(view, { history: 'replace', selection: parsePracticeRoute(window.location.hash) });
     }
     this.render();
@@ -130,7 +130,7 @@ class FidelatApp {
   attachEvents() {
     window.addEventListener('hashchange', () => {
       if (this.route !== 'admin') {
-        this.openView(this.getViewFromHash() || 'home', { history: 'replace', selection: parsePracticeRoute(window.location.hash) })
+        this.openView(this.getViewFromHash() || 'explorer', { history: 'replace', selection: parsePracticeRoute(window.location.hash) })
           .catch((error) => this.setBanner('error', error.message));
       }
     });
@@ -255,7 +255,7 @@ class FidelatApp {
     if (activeView === 'dragdrop') return this.store.getText('dragdrop.title', {}, activeProfile);
     if (activeView === 'challenge') return this.store.getText('challenge.title', {}, activeProfile);
     if (activeView === 'additionalLetters') return this.store.getText('additional.title', {}, activeProfile);
-    return this.store.getText('home.welcomeTitle', { name: activeProfile.name }, activeProfile);
+    return this.store.getText('help.title', {}, activeProfile);
   }
 
   updateDocumentTitle() {
@@ -311,7 +311,7 @@ class FidelatApp {
   }
 
   async completeLearnerAuthSuccess(message) {
-    const redirectView = this.authModal?.redirectView || 'home';
+    const redirectView = this.authModal?.redirectView || 'explorer';
     this.authModal = null;
     this.store.setActiveView(redirectView);
 
@@ -326,7 +326,7 @@ class FidelatApp {
   }
 
   async openView(view, options = {}) {
-    if (view !== 'admin' && !Object.hasOwn(SECTION_HASHES, view)) view = 'home';
+    if (view !== 'admin' && !Object.hasOwn(SECTION_HASHES, view)) view = 'explorer';
     if (view === 'admin') {
       this.goToAdminUrl();
       return;
@@ -891,11 +891,11 @@ class FidelatApp {
     const activeProfile = adminRoute ? null : this.store.getActiveProfile();
     const activeView = this.store.getProgress().activeView;
     const items = [
-      ['home', 'Home'],
       ['explorer', 'Learn'],
       ['dragdrop', 'Test 1'],
       ['challenge', 'Test 2'],
-      ['additionalLetters', 'More']
+      ['additionalLetters', 'More'],
+      ['home', 'Help']
     ];
 
     const navigation = adminRoute
@@ -1162,6 +1162,12 @@ class FidelatApp {
         <div class='home-main'>
           ${this.renderAuthLauncher()}
           <article class='card welcome-card'>
+            <h2 class='section-title'>${this.store.getText('help.title', {}, activeProfile)}</h2>
+            <p class='panel-copy learner-instructions'>${this.escapeTextarea(this.store.getText('help.gettingStarted', {}, activeProfile))}</p>
+            <details class='help-adults'>
+              <summary>For parents and teachers</summary>
+              <p class='panel-copy learner-instructions'>${this.escapeTextarea(this.store.getText('help.adults', {}, activeProfile))}</p>
+            </details>
             <div class='activity-badge'>${this.store.getText('home.pageBadge', {}, activeProfile)}</div>
             ${welcomeTitle ? `<h2 class='section-title'>${welcomeTitle}</h2>` : ''}
             ${welcomeTitle ? this.renderEnglishSupport('home.welcomeTitle', { name: activeProfile?.name || 'learner' }, activeProfile) : ''}
@@ -1219,15 +1225,15 @@ class FidelatApp {
               </div>
               <div class='metric'>
                 <div class='metric-value'>${this.store.getAccuracy()}%</div>
-                <div class='metric-label'>Challenge accuracy</div>
+                <div class='metric-label'>Test 2 accuracy</div>
               </div>
               <div class='metric'>
                 <div class='metric-value'>${dragdropCompleted}</div>
-                <div class='metric-label'>Drag & drop rows solved</div>
+                <div class='metric-label'>Test 1 rows solved</div>
               </div>
               <div class='metric'>
                 <div class='metric-value'>${this.store.getUnlockedCount()}/${VARIANT_NAMES.length}</div>
-                <div class='metric-label'>Unlocked variants</div>
+                <div class='metric-label'>Available variants</div>
               </div>
             </div>
             ${snapshotSummary ? `<p class='panel-copy'>${snapshotSummary}</p>` : ''}

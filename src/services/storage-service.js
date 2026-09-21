@@ -74,7 +74,7 @@ function normalizeAdditionalLettersHeardSets(heardSets) {
 
 export function createDefaultProgressState() {
   return {
-    activeView: 'home',
+    activeView: 'explorer',
     explorer: {
       variantIndex: 0,
       part: 1,
@@ -841,7 +841,7 @@ export class StorageService {
       }
     };
 
-    merged.activeView = ACTIVE_VIEWS.has(merged.activeView) ? merged.activeView : 'home';
+    merged.activeView = ACTIVE_VIEWS.has(merged.activeView) ? merged.activeView : 'explorer';
     merged.explorer.variantIndex = clampVariantIndex(merged.explorer.variantIndex);
     merged.explorer.part = normalizePart(merged.explorer.part);
     merged.explorer.selectedSymbol = merged.explorer.selectedSymbol || null;

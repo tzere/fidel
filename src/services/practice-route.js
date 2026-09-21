@@ -1,11 +1,12 @@
 import { VARIANT_NAMES, PRIMARY_ROWS, SECONDARY_ROWS, ADDITIONAL_LETTER_GROUPS } from '../data/fidelat-data.js';
 
-export const SECTION_HASHES = Object.freeze({ home: 'home', explorer: 'learn', dragdrop: 'test1', challenge: 'test2', additionalLetters: 'more' });
+export const SECTION_HASHES = Object.freeze({ home: 'help', explorer: 'learn', dragdrop: 'test1', challenge: 'test2', additionalLetters: 'more' });
 
 export function parsePracticeRoute(hash) {
   let parts;
   try { parts = decodeURIComponent(hash.replace(/^#\/?/, '')).replace(/\/$/, '').split('/'); }
   catch { return null; }
+  if (parts.length === 1 && parts[0] === 'home') return { view: 'home' }; // Existing dashboard bookmarks open Help.
   const view = Object.keys(SECTION_HASHES).find(key => SECTION_HASHES[key] === parts[0]);
   if (!view) return null;
   if (parts.length === 1) return { view };
@@ -32,7 +33,7 @@ export function practiceHash(view, state) {
   if (view === 'explorer' || view === 'challenge') return `#/${SECTION_HASHES[view]}/part/${state.part}/${VARIANT_NAMES[state.variantIndex]}`;
   if (view === 'dragdrop') return `#/test1/part/${state.part}`;
   if (view === 'additionalLetters') return `#/more/set/${state.groupId}/${state.tab === 'dragdrop' ? 'test' : 'learn'}`;
-  return '#home';
+  return '#help';
 }
 
 export function practiceOptions(view) {

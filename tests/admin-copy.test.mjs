@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { COPY_SECTIONS, createDefaultCopyState, mergeCopyWithDefaults, applyCopyPatch, resolveCopy } from '../src/services/content-service.js';
 
 test('admin groups follow the learner menu and each saved key appears exactly once', () => {
-  assert.deepEqual(COPY_SECTIONS.slice(0, 5).map(section => section.title), ['Home Page', 'Learn', 'Test 1', 'Test 2', 'More']);
+  assert.deepEqual(COPY_SECTIONS.slice(0, 5).map(section => section.title), ['Learn', 'Test 1', 'Test 2', 'More', 'Help']);
   const keys = COPY_SECTIONS.flatMap(section => section.fields.map(field => field.key));
   assert.equal(new Set(keys).size, keys.length);
   assert.ok(COPY_SECTIONS.find(section => section.id === 'learn').fields.some(field => field.key === 'explorer.instructions'));

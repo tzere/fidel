@@ -27,3 +27,10 @@ test('Test 1 links expose only two parts and old family links still resolve', ()
   assert.equal(parsePracticeRoute('#/test1/set/1/family/3').rowIndex, 2);
   assert.equal(parsePracticeRoute('#/test1/part/3'), null);
 });
+
+test('Help has its own bookmark and old Home bookmarks remain usable', () => {
+  assert.equal(practiceHash('home', {}), '#help');
+  for (const hash of ['#help', '#/help', '#home', '#/home']) {
+    assert.deepEqual(parsePracticeRoute(hash), { view: 'home' });
+  }
+});
